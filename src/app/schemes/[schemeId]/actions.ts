@@ -1841,9 +1841,9 @@ export async function lockScheme(schemeId: string) {
   return { ok: true };
 }
 
-export async function createSchemeScenario(schemeId: string) {
+export async function createSchemeScenario(schemeId: string): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -1853,7 +1853,7 @@ export async function createSchemeScenario(schemeId: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const { count, error: countError } = await supabase
@@ -1862,11 +1862,11 @@ export async function createSchemeScenario(schemeId: string) {
     .eq("scheme_id", schemeId);
 
   if (countError) {
-    return { ok: false, error: countError.message };
+    return;
   }
 
   if ((count ?? 0) >= 5) {
-    return { ok: false, error: "You can only store up to 5 scenarios." };
+    return;
   }
 
   const snapshot = await buildScenarioSnapshot(supabase, schemeId);
@@ -1889,7 +1889,7 @@ export async function createSchemeScenario(schemeId: string) {
     .single();
 
   if (error || !scenario) {
-    return { ok: false, error: error?.message ?? "Unable to create scenario" };
+    return;
   }
 
   await supabase
@@ -1898,7 +1898,7 @@ export async function createSchemeScenario(schemeId: string) {
     .eq("id", schemeId);
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function applySchemeScenario(
