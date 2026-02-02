@@ -2039,14 +2039,14 @@ export async function updateSchemeScenarioSnapshot(
 export async function deleteSchemeScenario(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const scenario_id = formData.get("scenario_id") as string;
   if (!scenario_id) {
-    return { ok: false, error: "Missing scenario id." };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -2056,7 +2056,7 @@ export async function deleteSchemeScenario(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const { data: current, error: currentError } = await supabase
@@ -2066,7 +2066,7 @@ export async function deleteSchemeScenario(
     .single();
 
   if (currentError) {
-    return { ok: false, error: currentError.message };
+    return;
   }
 
   const { error } = await supabase
@@ -2076,7 +2076,7 @@ export async function deleteSchemeScenario(
     .eq("scheme_id", schemeId);
 
   if (error) {
-    return { ok: false, error: error.message };
+    return;
   }
 
   if (current?.active_scenario_id === scenario_id) {
@@ -2087,5 +2087,5 @@ export async function deleteSchemeScenario(
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
