@@ -456,7 +456,12 @@ export default async function SchemeDetailPage({ params }: PageProps) {
           <h1>{scheme?.name}</h1>
           <div className="scheme-meta">
             <span>Created {new Date(scheme?.created_at).toLocaleString()}</span>
-            {scheme?.plants?.name ? <span>• Plant {scheme?.plants?.name}</span> : null}
+            {(() => {
+              const plant = Array.isArray(scheme?.plants)
+                ? scheme?.plants?.[0]
+                : scheme?.plants;
+              return plant?.name ? <span>• Plant {plant.name}</span> : null;
+            })()}
             <SchemeLockButton schemeId={schemeId} locked={isLocked} />
           </div>
           {isLocked ? (
