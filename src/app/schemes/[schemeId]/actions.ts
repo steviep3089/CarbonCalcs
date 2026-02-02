@@ -214,7 +214,7 @@ async function buildScenarioSnapshot(
 }
 
 async function buildScenarioLabel(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   schemeId: string,
   fallback: string
 ) {
@@ -239,7 +239,7 @@ async function buildScenarioLabel(
 }
 
 async function applyScenarioSnapshot(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   schemeId: string,
   snapshot: ScenarioSnapshot
 ) {
