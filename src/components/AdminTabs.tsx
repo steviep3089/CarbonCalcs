@@ -39,8 +39,8 @@ type PlantMixFactor = {
   valid_from: string | null;
   valid_to: string | null;
   source: string | null;
-  plants?: { name: string | null } | null;
-  products?: { name: string | null } | null;
+  plants?: { name: string | null }[] | null;
+  products?: { name: string | null }[] | null;
 };
 
 type InstallationSetup = {
