@@ -1,0 +1,3 @@
+kind,label,unit,value,source,sort_order,is_active
+equivalency,Return Flight to Sydney,flight,1.5779,ICAO,10,true
+savings,Vehicle mileage savings WMA,miles,2181,,10,true
