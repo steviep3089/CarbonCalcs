@@ -267,9 +267,12 @@ export default async function SchemeDetailPage({ params }: PageProps) {
   const stageGroups = (results ?? []).reduce((acc, row) => {
     const stage = row.lifecycle_stage;
     if (!acc.has(stage)) {
+      const lifecycleStage = Array.isArray(row.lifecycle_stages)
+        ? row.lifecycle_stages[0]
+        : row.lifecycle_stages;
       acc.set(stage, {
         stage,
-        description: row.lifecycle_stages?.description ?? null,
+        description: lifecycleStage?.description ?? null,
         summary: null as typeof row | null,
         details: [] as typeof row[],
       });
