@@ -30,6 +30,10 @@ export default async function SchemesPage() {
     );
   }
 
+  const getJoinName = (
+    value: { name: string | null } | { name: string | null }[] | null | undefined
+  ) => (Array.isArray(value) ? value[0]?.name ?? null : value?.name ?? null);
+
   const schemeIds = (schemes ?? []).map((scheme) => scheme.id);
   const summaryMap = new Map<
     string,
@@ -76,9 +80,9 @@ export default async function SchemesPage() {
     if (schemeMaterials) {
       const summaryMap = new Map<string, { label: string; tonnage: number }>();
       schemeMaterials.forEach((row) => {
-        const plantName = row.plants?.name ?? "Plant";
-        const mixName = row.mix_types?.name ?? "Mix";
-        const productName = row.products?.name ?? "Product";
+        const plantName = getJoinName(row.plants) ?? "Plant";
+        const mixName = getJoinName(row.mix_types) ?? "Mix";
+        const productName = getJoinName(row.products) ?? "Product";
         const label = `${plantName} - ${mixName} - ${productName}`;
         const key = `${row.scheme_id}::${label}`;
         const prev = summaryMap.get(key);

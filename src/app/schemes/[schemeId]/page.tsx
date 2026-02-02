@@ -264,6 +264,10 @@ export default async function SchemeDetailPage({ params }: PageProps) {
     }).format(value);
   };
 
+  const getJoinName = (
+    value: { name: string | null } | { name: string | null }[] | null | undefined
+  ) => (Array.isArray(value) ? value[0]?.name ?? null : value?.name ?? null);
+
   const lifecycleResults = results ?? [];
   type LifecycleRow = (typeof lifecycleResults)[number];
 
@@ -315,6 +319,12 @@ export default async function SchemeDetailPage({ params }: PageProps) {
     const category = (row.category ?? "").trim().toLowerCase();
     return category === "plant" || category === "transport";
   });
+  const normalizedA5Usage = (schemeA5Usage ?? []).map((entry) => ({
+    ...entry,
+    scheme_installation_items: Array.isArray(entry.scheme_installation_items)
+      ? entry.scheme_installation_items[0] ?? null
+      : entry.scheme_installation_items ?? null,
+  }));
   const installationSummary = (schemeInstallationItems ?? []).reduce(
     (acc, row) => {
       const category = (row.category ?? "").trim().toLowerCase();
@@ -604,9 +614,9 @@ export default async function SchemeDetailPage({ params }: PageProps) {
             {schemeProducts?.length ? (
               schemeProducts.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.products?.name}</td>
-                  <td>{row.mix_types?.name ?? row.mix_type_id}</td>
-                  <td>{row.plants?.name}</td>
+                  <td>{getJoinName(row.products) ?? "-"}</td>
+                  <td>{getJoinName(row.mix_types) ?? row.mix_type_id ?? "-"}</td>
+                  <td>{getJoinName(row.plants) ?? "-"}</td>
                   <td align="right">{row.tonnage}</td>
                   <td align="right">
                     {(() => {
@@ -622,7 +632,7 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                       return value !== null ? `${formatNumber(value, 1)} ${unit}` : "-";
                     })()}
                   </td>
-                  <td>{row.transport_modes?.name ?? "-"}</td>
+                  <td>{getJoinName(row.transport_modes) ?? "-"}</td>
                   <td>
                     {row.delivery_type === "return"
                       ? "Return"
@@ -1000,7 +1010,7 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                   fuelMode={(scheme?.a5_fuel_mode ?? "auto").toLowerCase()}
                   distanceUnit={distanceUnit}
                   hasA5Postcodes={hasA5Postcodes}
-                  hasUsageEntries={(schemeA5Usage ?? []).length > 0}
+                  hasUsageEntries={normalizedA5Usage.length > 0}
                 />
                 <span className="scheme-collapse-indicator" aria-hidden="true">
                   v
@@ -1009,7 +1019,7 @@ export default async function SchemeDetailPage({ params }: PageProps) {
             </summary>
             <SchemeA5Usage
               schemeId={schemeId}
-              entries={schemeA5Usage ?? []}
+              entries={normalizedA5Usage}
               items={a5UsageItems}
               fuelNameEntries={fuelNameEntries}
               fuelMode={(scheme?.a5_fuel_mode ?? "auto").toLowerCase()}
@@ -1074,11 +1084,11 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                     ? Array.from(
                         displayDetails.reduce((acc, detail) => {
                           const productLabel =
-                            detail.detail_label ?? detail.products?.name ?? "Product";
+                            detail.detail_label ?? getJoinName(detail.products) ?? "Product";
                           const mixLabel =
                             detail.detail_label
                               ? "?"
-                              : detail.mix_types?.name ?? detail.mix_type_id ?? "Mix";
+                              : getJoinName(detail.mix_types) ?? detail.mix_type_id ?? "Mix";
                           const key = `${productLabel}||${mixLabel}`;
                           const existing = acc.get(key) ?? {
                             key,
@@ -1111,7 +1121,8 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                     ? Array.from(
                         displayDetails
                           .reduce((acc, detail) => {
-                            const label = detail.detail_label ?? detail.products?.name ?? "Item";
+                            const label =
+                              detail.detail_label ?? getJoinName(detail.products) ?? "Item";
                             const category = normalizeA5Category(
                               a5CategoryByLabel.get(label) ?? label
                             );
@@ -1291,8 +1302,8 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                                           }
                                           className="lifecycle-detail-row"
                                         >
-                                          <span>{detail.products?.name ?? "-"}</span>
-                                          <span>{detail.mix_types?.name ?? detail.mix_type_id ?? "-"}</span>
+                                          <span>{getJoinName(detail.products) ?? "-"}</span>
+                                          <span>{getJoinName(detail.mix_types) ?? detail.mix_type_id ?? "-"}</span>
                                           <span className="lifecycle-right">
                                             {formatNumber(
                                               hideTotal ? null : detail.total_kgco2e ?? null,

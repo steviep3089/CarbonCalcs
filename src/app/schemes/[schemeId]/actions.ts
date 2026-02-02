@@ -537,7 +537,10 @@ export async function addSchemeProduct(
   return { ok: true };
 }
 
-export async function deleteSchemeProduct(schemeId: string, formData: FormData) {
+export async function deleteSchemeProduct(
+  schemeId: string,
+  formData: FormData
+): Promise<void> {
   if (!schemeId) {
     throw new Error("No schemeId provided");
   }
@@ -597,7 +600,7 @@ export async function deleteSchemeProduct(schemeId: string, formData: FormData) 
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function addSchemeInstallationItem(
@@ -687,7 +690,7 @@ export async function addSchemeInstallationItem(
 export async function addSchemeInstallationItemsBulk(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
     throw new Error("No schemeId provided");
   }
@@ -798,7 +801,7 @@ export async function addSchemeInstallationItemsBulk(
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function enableAutoInstallationItems(schemeId: string) {
@@ -1034,7 +1037,7 @@ export async function enableManualMaterials(schemeId: string) {
 export async function deleteSchemeInstallationItem(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
     throw new Error("No schemeId provided");
   }
@@ -1065,20 +1068,20 @@ export async function deleteSchemeInstallationItem(
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function updateSchemeMaterialUsage(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const id = formData.get("id") as string;
   if (!id) {
-    return { ok: false, error: "Missing material id" };
+    return;
   }
 
   const rawValue = (formData.get("material_tonnage_override") as string | null) ?? "";
@@ -1086,7 +1089,7 @@ export async function updateSchemeMaterialUsage(
   const material_tonnage_override = trimmed === "" ? null : Number(trimmed);
 
   if (material_tonnage_override !== null && Number.isNaN(material_tonnage_override)) {
-    return { ok: false, error: "Invalid tonnage value" };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -1096,7 +1099,7 @@ export async function updateSchemeMaterialUsage(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const { error } = await supabase
@@ -1106,7 +1109,7 @@ export async function updateSchemeMaterialUsage(
     .eq("scheme_id", schemeId);
 
   if (error) {
-    return { ok: false, error: error.message };
+    return;
   }
 
   const { error: recalcError } = await supabase.rpc("calculate_scheme_carbon", {
@@ -1114,11 +1117,11 @@ export async function updateSchemeMaterialUsage(
   });
 
   if (recalcError) {
-    return { ok: false, error: recalcError.message };
+    return;
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function autoGenerateMaterialTonnage(schemeId: string) {
@@ -1338,7 +1341,7 @@ export async function addSchemeA5Usage(
 export async function deleteSchemeA5Usage(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
     throw new Error("No schemeId provided");
   }
@@ -1377,7 +1380,7 @@ export async function deleteSchemeA5Usage(
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function updateSchemeA5Usage(
@@ -1798,9 +1801,9 @@ export async function updateSchemeArea(schemeId: string, formData: FormData) {
   return { ok: true };
 }
 
-export async function lockScheme(schemeId: string) {
+export async function lockScheme(schemeId: string): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -1810,7 +1813,7 @@ export async function lockScheme(schemeId: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const { data: existing, error: existingError } = await supabase
@@ -1820,11 +1823,11 @@ export async function lockScheme(schemeId: string) {
     .single();
 
   if (existingError) {
-    return { ok: false, error: existingError.message };
+    return;
   }
 
   if (existing?.is_locked) {
-    return { ok: true };
+    return;
   }
 
   const { error } = await supabase
@@ -1833,12 +1836,12 @@ export async function lockScheme(schemeId: string) {
     .eq("id", schemeId);
 
   if (error) {
-    return { ok: false, error: error.message };
+    return;
   }
 
   revalidatePath(`/schemes/${schemeId}`);
   revalidatePath("/schemes");
-  return { ok: true };
+  return;
 }
 
 export async function createSchemeScenario(schemeId: string): Promise<void> {
@@ -1957,16 +1960,16 @@ export async function applySchemeScenario(
 export async function updateSchemeScenarioLabel(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const scenario_id = formData.get("scenario_id") as string;
   const label = (formData.get("label") as string | null)?.trim() ?? "";
 
   if (!scenario_id) {
-    return { ok: false, error: "Missing scenario id." };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -1976,7 +1979,7 @@ export async function updateSchemeScenarioLabel(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const { error } = await supabase
@@ -1990,11 +1993,11 @@ export async function updateSchemeScenarioLabel(
     .eq("scheme_id", schemeId);
 
   if (error) {
-    return { ok: false, error: error.message };
+    return;
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function updateSchemeScenarioSnapshot(

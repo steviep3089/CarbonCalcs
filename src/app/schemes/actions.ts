@@ -8,8 +8,26 @@ type CreateSchemeState = {
   success?: boolean;
 };
 
+type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+type InstallationSetupRow = {
+  id: string;
+  plant_name: string | null;
+  category: string | null;
+  spread_rate_t_per_m2: number | null;
+  kgco2_per_t: number | null;
+  kgco2_per_ltr: number | null;
+  kgco2e_per_km: number | null;
+  litres_per_t: number | null;
+  litres_na: boolean | null;
+  kgco2e: number | null;
+  kgco2e_na: boolean | null;
+  one_way: boolean | null;
+  is_default?: boolean | null;
+};
+
 async function applyDefaultInstallationItems(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
+  supabase: SupabaseServerClient,
   schemeId: string
 ) {
   const { data: setups } = await supabase
@@ -19,10 +37,11 @@ async function applyDefaultInstallationItems(
     )
     .eq("is_default", true);
 
-  const defaultFuel = (setups ?? []).find(
+  const setupRows = (setups ?? []) as InstallationSetupRow[];
+  const defaultFuel = setupRows.find(
     (row) => (row.category ?? "").toLowerCase() === "fuel"
   );
-  const defaultItems = (setups ?? []).filter((row) => {
+  const defaultItems = setupRows.filter((row) => {
     const category = (row.category ?? "").toLowerCase();
     return category === "plant" || category === "transport";
   });
@@ -54,7 +73,7 @@ async function applyDefaultInstallationItems(
 }
 
 async function applyDefaultMaterialItems(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
+  supabase: SupabaseServerClient,
   schemeId: string
 ) {
   const { data: setups } = await supabase
@@ -64,7 +83,8 @@ async function applyDefaultMaterialItems(
     )
     .eq("is_default", true);
 
-  const defaultMaterials = (setups ?? []).filter(
+  const setupRows = (setups ?? []) as InstallationSetupRow[];
+  const defaultMaterials = setupRows.filter(
     (row) => (row.category ?? "").toLowerCase() === "material"
   );
 
@@ -149,7 +169,7 @@ export async function createScheme(
   return { success: true };
 }
 
-export async function deleteScheme(schemeId: string): Promise<CreateSchemeState> {
+export async function deleteScheme(schemeId: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -157,15 +177,15 @@ export async function deleteScheme(schemeId: string): Promise<CreateSchemeState>
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { error: "You must be signed in to delete a scheme." };
+    return;
   }
 
   const { error } = await supabase.from("schemes").delete().eq("id", schemeId);
 
   if (error) {
-    return { error: error.message };
+    return;
   }
 
   revalidatePath("/schemes");
-  return { success: true };
+  return;
 }

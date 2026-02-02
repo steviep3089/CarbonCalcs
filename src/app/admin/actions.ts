@@ -118,7 +118,7 @@ export async function createPlant(
   return { success: true };
 }
 
-export async function updatePlant(formData: FormData): Promise<ActionState> {
+export async function updatePlant(formData: FormData): Promise<void> {
   const id = formData.get("id") as string;
   const name = (formData.get("name") as string | null)?.trim();
   const location = (formData.get("location") as string | null)?.trim();
@@ -126,7 +126,7 @@ export async function updatePlant(formData: FormData): Promise<ActionState> {
   const is_default = formData.get("is_default") === "on";
 
   if (!id || !name) {
-    return { error: "Plant id and name are required." };
+    return;
   }
 
   const supabase = await requireUser();
@@ -144,10 +144,10 @@ export async function updatePlant(formData: FormData): Promise<ActionState> {
     })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
 export async function createPlantMixFactor(
@@ -185,9 +185,7 @@ export async function createPlantMixFactor(
   return { success: true };
 }
 
-export async function updatePlantMixFactor(
-  formData: FormData
-): Promise<ActionState> {
+export async function updatePlantMixFactor(formData: FormData): Promise<void> {
   const id = formData.get("id") as string;
   const plant_id = formData.get("plant_id") as string;
   const mix_type_id = formData.get("mix_type_id") as string;
@@ -198,7 +196,7 @@ export async function updatePlantMixFactor(
   const source = (formData.get("source") as string | null)?.trim();
 
   if (!id || !plant_id || !mix_type_id || Number.isNaN(kgco2e_per_tonne)) {
-    return { error: "Missing required fields." };
+    return;
   }
 
   const supabase = await requireUser();
@@ -215,18 +213,18 @@ export async function updatePlantMixFactor(
     })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
-export async function setPlantMixDefault(formData: FormData): Promise<ActionState> {
+export async function setPlantMixDefault(formData: FormData): Promise<void> {
   const id = formData.get("id") as string;
   const plant_id = formData.get("plant_id") as string;
 
   if (!id || !plant_id) {
-    return { error: "Missing plant mix id." };
+    return;
   }
 
   const supabase = await requireUser();
@@ -235,17 +233,17 @@ export async function setPlantMixDefault(formData: FormData): Promise<ActionStat
     .update({ is_default: false })
     .eq("plant_id", plant_id);
 
-  if (clearError) return { error: clearError.message };
+  if (clearError) return;
 
   const { error } = await supabase
     .from("plant_mix_carbon_factors")
     .update({ is_default: true })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
 export async function createTransportMode(
@@ -284,7 +282,7 @@ export async function createTransportMode(
   return { success: true };
 }
 
-export async function updateTransportMode(formData: FormData): Promise<ActionState> {
+export async function updateTransportMode(formData: FormData): Promise<void> {
   const id = (formData.get("id") as string | null)?.trim();
   const original_id = (formData.get("original_id") as string | null)?.trim() || null;
   const name = (formData.get("name") as string | null)?.trim();
@@ -294,7 +292,7 @@ export async function updateTransportMode(formData: FormData): Promise<ActionSta
   const is_default = formData.get("is_default") === "on";
 
   if (!id || !name || Number.isNaN(kgco2e_per_km)) {
-    return { error: "Id, name, and kgCO2e value are required." };
+    return;
   }
 
   const supabase = await requireUser();
@@ -309,23 +307,23 @@ export async function updateTransportMode(formData: FormData): Promise<ActionSta
     .update({ id, name, kgco2e_per_km, kgco2e_unit: unit, is_default })
     .eq("id", original_id ?? id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
-export async function deleteTransportMode(formData: FormData): Promise<ActionState> {
+export async function deleteTransportMode(formData: FormData): Promise<void> {
   const id = (formData.get("id") as string | null)?.trim();
-  if (!id) return { error: "Missing id." };
+  if (!id) return;
 
   const supabase = await requireUser();
   const { error } = await supabase.from("transport_modes").delete().eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
 export async function createMixType(
@@ -592,9 +590,7 @@ export async function createInstallationSetup(
   return { success: true };
 }
 
-export async function updateInstallationSetup(
-  formData: FormData
-): Promise<ActionState> {
+export async function updateInstallationSetup(formData: FormData): Promise<void> {
   const id = formData.get("id") as string;
   const plant_name = (formData.get("plant_name") as string | null)?.trim();
   const category = (formData.get("category") as string | null)?.trim();
@@ -618,11 +614,11 @@ export async function updateInstallationSetup(
   const is_default = formData.get("is_default") === "on";
 
   if (!id || !plant_name) {
-    return { error: "Plant name is required." };
+    return;
   }
 
   if (!category) {
-    return { error: "Category is required." };
+    return;
   }
 
   const supabase = await requireUser();
@@ -651,10 +647,10 @@ export async function updateInstallationSetup(
     })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
 export async function updateInstallationSetupsBulk(
@@ -1299,9 +1295,7 @@ export async function createReportMetric(
   return { success: true };
 }
 
-export async function updateReportMetric(
-  formData: FormData
-): Promise<ActionState> {
+export async function updateReportMetric(formData: FormData): Promise<void> {
   const id = formData.get("id") as string | null;
   const kind = (formData.get("kind") as string | null)?.trim() as
     | "equivalency"
@@ -1319,17 +1313,17 @@ export async function updateReportMetric(
   const is_active = formData.get("is_active") === "on";
 
   if (!id || !kind || !label) {
-    return { error: "Missing id, kind, or label." };
+    return;
   }
 
   const value = valueRaw ? Number(valueRaw) : null;
   if (valueRaw && Number.isNaN(value)) {
-    return { error: "Value must be a number." };
+    return;
   }
 
   const calc_factor = calcFactorRaw ? Number(calcFactorRaw) : null;
   if (calcFactorRaw && Number.isNaN(calc_factor)) {
-    return { error: "Factor must be a number." };
+    return;
   }
 
   const sort_order = sortRaw ? Number(sortRaw) : 0;
@@ -1351,31 +1345,27 @@ export async function updateReportMetric(
     })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
-export async function deleteReportMetric(
-  formData: FormData
-): Promise<ActionState> {
+export async function deleteReportMetric(formData: FormData): Promise<void> {
   const id = formData.get("id") as string | null;
-  if (!id) return { error: "Missing id." };
+  if (!id) return;
 
   const supabase = await requireUser();
   const { error } = await supabase.from("report_metrics").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
-export async function updateGhgCategory(
-  formData: FormData
-): Promise<ActionState> {
+export async function updateGhgCategory(formData: FormData): Promise<void> {
   const key = formData.get("key") as string | null;
-  if (!key) return { error: "Missing category key." };
+  if (!key) return;
 
   const is_active = formData.get("is_active") === "on";
 
@@ -1385,17 +1375,15 @@ export async function updateGhgCategory(
     .update({ is_active })
     .eq("key", key);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
-export async function updateGhgFactorFilter(
-  formData: FormData
-): Promise<ActionState> {
+export async function updateGhgFactorFilter(formData: FormData): Promise<void> {
   const id = formData.get("id") as string | null;
-  if (!id) return { error: "Missing filter id." };
+  if (!id) return;
 
   const is_active = formData.get("is_active") === "on";
 
@@ -1405,18 +1393,16 @@ export async function updateGhgFactorFilter(
     .update({ is_active })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }
 
-export async function setGhgFactorFiltersActive(
-  formData: FormData
-): Promise<ActionState> {
+export async function setGhgFactorFiltersActive(formData: FormData): Promise<void> {
   const categoryKey = (formData.get("category_key") as string | null)?.trim();
   const value = (formData.get("value") as string | null)?.trim();
-  if (!categoryKey) return { error: "Missing category key." };
+  if (!categoryKey) return;
 
   const is_active = value === "on";
 
@@ -1426,8 +1412,8 @@ export async function setGhgFactorFiltersActive(
     .update({ is_active })
     .eq("category_key", categoryKey);
 
-  if (error) return { error: error.message };
+  if (error) return;
 
   revalidatePath("/admin");
-  return { success: true };
+  return;
 }

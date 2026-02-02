@@ -102,6 +102,7 @@ type ActionResponse = {
   error?: string;
   success?: boolean;
   count?: number;
+  message?: string;
   matches?: Array<{
     id: string;
     plant_id: string;
@@ -125,17 +126,17 @@ type ActionResponse = {
 
 type Actions = {
   createPlant: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
-  updatePlant: (formData: FormData) => Promise<ActionResponse>;
+  updatePlant: (formData: FormData) => Promise<void>;
   createPlantMixFactor: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
-  updatePlantMixFactor: (formData: FormData) => Promise<ActionResponse>;
-  setPlantMixDefault: (formData: FormData) => Promise<ActionResponse>;
+  updatePlantMixFactor: (formData: FormData) => Promise<void>;
+  setPlantMixDefault: (formData: FormData) => Promise<void>;
   createTransportMode: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
-  updateTransportMode: (formData: FormData) => Promise<ActionResponse>;
-  deleteTransportMode: (formData: FormData) => Promise<ActionResponse>;
+  updateTransportMode: (formData: FormData) => Promise<void>;
+  deleteTransportMode: (formData: FormData) => Promise<void>;
   createMixType: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   updateMixType: (formData: FormData) => Promise<ActionResponse>;
   createInstallationSetup: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
-  updateInstallationSetup: (formData: FormData) => Promise<ActionResponse>;
+  updateInstallationSetup: (formData: FormData) => Promise<void>;
   updateInstallationSetupsBulk: (formData: FormData) => Promise<ActionResponse>;
   uploadInstallationSetups: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   deleteInstallationSetup: (formData: FormData) => Promise<ActionResponse>;
@@ -144,13 +145,17 @@ type Actions = {
   uploadMaterialMappings: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   inviteUser: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   createReportMetric: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
-  updateReportMetric: (formData: FormData) => Promise<ActionResponse>;
-  deleteReportMetric: (formData: FormData) => Promise<ActionResponse>;
+  updateReportMetric: (formData: FormData) => Promise<void>;
+  deleteReportMetric: (formData: FormData) => Promise<void>;
   uploadReportMetrics: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
-  updateGhgCategory: (formData: FormData) => Promise<ActionResponse>;
-  updateGhgFactorFilter: (formData: FormData) => Promise<ActionResponse>;
-  setGhgFactorFiltersActive: (formData: FormData) => Promise<ActionResponse>;
+  updateGhgCategory: (formData: FormData) => Promise<void>;
+  updateGhgFactorFilter: (formData: FormData) => Promise<void>;
+  setGhgFactorFiltersActive: (formData: FormData) => Promise<void>;
 };
+
+const getJoinName = (
+  value: { name: string | null } | { name: string | null }[] | null | undefined
+) => (Array.isArray(value) ? value[0]?.name ?? null : value?.name ?? null);
 
 type AdminTabsProps = {
   plants: Plant[];
@@ -495,7 +500,7 @@ function ManufacturingTab({
                       <>
                         <div>
                           <strong>{row.mix_type_id}</strong>
-                          <span>{row.products?.name ?? "No product"}</span>
+                          <span>{getJoinName(row.products) ?? "No product"}</span>
                         </div>
                         <div className="plant-factor-meta">
                           <span>{row.kgco2e_per_tonne ?? "-"} kgCO2e / t</span>
@@ -1009,9 +1014,9 @@ function MaterialCreationTab({
                     }}
                   />
                   <div className="overwrite-proposed-row overwrite-item-row">
-                    <span>Plants: {row.plants?.name ?? "Plant"}</span>
+                    <span>Plants: {getJoinName(row.plants) ?? "Plant"}</span>
                     <span>Mix: {row.mix_type_id || "-"}</span>
-                    <span>Product: {row.products?.name ?? "No product"}</span>
+                    <span>Product: {getJoinName(row.products) ?? "No product"}</span>
                     <span>kgCO2e: {row.kgco2e_per_tonne ?? "-"}</span>
                     <span>
                       Dates: {row.valid_from ?? "-"} to {row.valid_to ?? "N/A"}
@@ -1049,12 +1054,14 @@ function InstallationTab({
     {}
   );
   const [bulkState, bulkAction] = useActionState(
-    actions.updateInstallationSetupsBulk,
+    async (_prev: ActionResponse, formData: FormData) =>
+      actions.updateInstallationSetupsBulk(formData),
     {}
   );
   const [isBulkPending, startBulkTransition] = useTransition();
   const [deleteState, deleteAction] = useActionState(
-    async (_prev, formData) => actions.deleteInstallationSetup(formData),
+    async (_prev: ActionResponse, formData: FormData) =>
+      actions.deleteInstallationSetup(formData),
     {}
   );
   const [filter, setFilter] = useState("");
