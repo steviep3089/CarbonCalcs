@@ -110,8 +110,8 @@ type ActionResponse = {
     kgco2e_per_tonne: number | null;
     valid_from: string | null;
     valid_to: string | null;
-    plants?: { name: string | null } | null;
-    products?: { name: string | null } | null;
+    plants?: { name: string | null } | { name: string | null }[] | null;
+    products?: { name: string | null } | { name: string | null }[] | null;
   }>;
   proposed?: {
     kgco2e_per_tonne: number;
