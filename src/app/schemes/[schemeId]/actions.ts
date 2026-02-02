@@ -1904,14 +1904,14 @@ export async function createSchemeScenario(schemeId: string) {
 export async function applySchemeScenario(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const scenario_id = formData.get("scenario_id") as string;
   if (!scenario_id) {
-    return { ok: false, error: "Missing scenario id." };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -1921,7 +1921,7 @@ export async function applySchemeScenario(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const { data: scenario, error } = await supabase
@@ -1932,7 +1932,7 @@ export async function applySchemeScenario(
     .single();
 
   if (error || !scenario) {
-    return { ok: false, error: error?.message ?? "Scenario not found" };
+    return;
   }
 
   await applyScenarioSnapshot(supabase, schemeId, scenario.snapshot as ScenarioSnapshot);
@@ -1947,11 +1947,11 @@ export async function applySchemeScenario(
   });
 
   if (recalcError) {
-    return { ok: false, error: recalcError.message };
+    return;
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function updateSchemeScenarioLabel(
