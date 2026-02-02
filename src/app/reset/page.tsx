@@ -19,18 +19,39 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const code = searchParams.get("code");
-    if (!code) {
-      setMessage("Missing or invalid reset link.");
-      setReady(true);
+    const token = searchParams.get("token") ?? searchParams.get("token_hash");
+    const type = searchParams.get("type") as
+      | "signup"
+      | "recovery"
+      | "invite"
+      | "magiclink"
+      | "email_change"
+      | null;
+
+    if (code) {
+      supabaseBrowser.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setMessage(error.message);
+        }
+        setReady(true);
+      });
       return;
     }
 
-    supabaseBrowser.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        setMessage(error.message);
-      }
-      setReady(true);
-    });
+    if (token && type) {
+      supabaseBrowser.auth
+        .verifyOtp({ token_hash: token, type })
+        .then(({ error }) => {
+          if (error) {
+            setMessage(error.message);
+          }
+          setReady(true);
+        });
+      return;
+    }
+
+    setMessage("Missing or invalid reset link.");
+    setReady(true);
   }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
