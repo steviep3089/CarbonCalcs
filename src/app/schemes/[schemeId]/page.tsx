@@ -264,7 +264,10 @@ export default async function SchemeDetailPage({ params }: PageProps) {
     }).format(value);
   };
 
-  const stageGroups = (results ?? []).reduce((acc, row) => {
+  const lifecycleResults = results ?? [];
+  type LifecycleRow = (typeof lifecycleResults)[number];
+
+  const stageGroups = lifecycleResults.reduce((acc, row) => {
     const stage = row.lifecycle_stage;
     if (!acc.has(stage)) {
       const lifecycleStage = Array.isArray(row.lifecycle_stages)
@@ -273,8 +276,8 @@ export default async function SchemeDetailPage({ params }: PageProps) {
       acc.set(stage, {
         stage,
         description: lifecycleStage?.description ?? null,
-        summary: null as typeof row | null,
-        details: [] as typeof row[],
+        summary: null as LifecycleRow | null,
+        details: [] as LifecycleRow[],
       });
     }
     const group = acc.get(stage);
@@ -285,7 +288,7 @@ export default async function SchemeDetailPage({ params }: PageProps) {
       group.details.push(row);
     }
     return acc;
-  }, new Map<string, { stage: string; description: string | null; summary: typeof results[number] | null; details: typeof results[number][] }>());
+  }, new Map<string, { stage: string; description: string | null; summary: LifecycleRow | null; details: LifecycleRow[] }>());
 
   const lifecycleRows = Array.from(stageGroups.values()).sort((a, b) =>
     a.stage.localeCompare(b.stage)
