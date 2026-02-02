@@ -229,7 +229,10 @@ async function buildScenarioLabel(
 
   const names = new Set<string>();
   (data ?? []).forEach((row) => {
-    if (row.mix_types?.name) names.add(row.mix_types.name);
+    const mix = Array.isArray(row.mix_types)
+      ? row.mix_types[0]
+      : row.mix_types;
+    if (mix?.name) names.add(mix.name);
   });
 
   const label = Array.from(names).join(", ").trim();
