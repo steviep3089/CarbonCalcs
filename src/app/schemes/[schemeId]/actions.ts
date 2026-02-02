@@ -2000,14 +2000,14 @@ export async function updateSchemeScenarioLabel(
 export async function updateSchemeScenarioSnapshot(
   schemeId: string,
   formData: FormData
-) {
+): Promise<void> {
   if (!schemeId) {
-    return { ok: false, error: "No schemeId provided" };
+    return;
   }
 
   const scenario_id = formData.get("scenario_id") as string;
   if (!scenario_id) {
-    return { ok: false, error: "Missing scenario id." };
+    return;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -2017,7 +2017,7 @@ export async function updateSchemeScenarioSnapshot(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, error: "Unauthorized" };
+    return;
   }
 
   const snapshot = await buildScenarioSnapshot(supabase, schemeId);
@@ -2029,11 +2029,11 @@ export async function updateSchemeScenarioSnapshot(
     .eq("scheme_id", schemeId);
 
   if (error) {
-    return { ok: false, error: error.message };
+    return;
   }
 
   revalidatePath(`/schemes/${schemeId}`);
-  return { ok: true };
+  return;
 }
 
 export async function deleteSchemeScenario(
