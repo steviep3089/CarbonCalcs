@@ -720,6 +720,7 @@ export async function updateInstallationSetupsBulk(
     kgco2_per_ltr: number;
     kgco2e: number;
     kgco2e_per_km: number;
+    kgco2e_unit: string;
     litres_per_t: number;
     litres_na: boolean;
     one_way: boolean;
