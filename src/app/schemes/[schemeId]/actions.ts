@@ -146,7 +146,7 @@ type ScenarioSnapshot = {
 };
 
 async function buildScenarioSnapshot(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   schemeId: string
 ): Promise<ScenarioSnapshot> {
   const { data: schemeProducts } = await supabase
