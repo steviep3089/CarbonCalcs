@@ -77,7 +77,7 @@ async function getPostcodeDistanceKm(fromPostcode: string, toPostcode: string) {
 }
 
 async function getSchemeDistanceUnit(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   schemeId: string
 ) {
   const { data } = await supabase
