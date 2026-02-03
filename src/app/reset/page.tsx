@@ -18,6 +18,25 @@ export default function ResetPasswordPage() {
   }, [password, confirm]);
 
   useEffect(() => {
+    const hash = window.location.hash?.replace(/^#/, "") ?? "";
+    if (hash) {
+      const hashParams = new URLSearchParams(hash);
+      const access_token = hashParams.get("access_token");
+      const refresh_token = hashParams.get("refresh_token");
+      if (access_token && refresh_token) {
+        supabaseBrowser.auth
+          .setSession({ access_token, refresh_token })
+          .then(({ error }) => {
+            if (error) {
+              setMessage(error.message);
+            }
+            window.history.replaceState({}, "", window.location.pathname);
+            setReady(true);
+          });
+        return;
+      }
+    }
+
     const code = searchParams.get("code");
     const token = searchParams.get("token") ?? searchParams.get("token_hash");
     const type = searchParams.get("type") as
