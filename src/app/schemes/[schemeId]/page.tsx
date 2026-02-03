@@ -1054,7 +1054,7 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                     return [row.stage, total];
                   })
                 );
-                const denom = totalTonnage > 0 ? totalTonnage : null;
+                const denom = deliveredTonnage > 0 ? deliveredTonnage : null;
                 const stageById = new Map(
                   lifecycleRows.map((row) => [row.stage, row])
                 );
@@ -1072,7 +1072,12 @@ export default async function SchemeDetailPage({ params }: PageProps) {
                     return hasTotal || hasPer;
                   });
                   const summaryTotal = group.summary?.total_kgco2e ?? totalFromDetails;
-                  const summaryPer = group.summary?.kgco2e_per_tonne ?? null;
+                  const summaryPer =
+                    group.stage === "A2" || group.stage === "A3"
+                      ? deliveredTonnage > 0
+                        ? summaryTotal / deliveredTonnage
+                        : null
+                      : group.summary?.kgco2e_per_tonne ?? null;
                   const description =
                     group.stage === "A4" && hasTipDelivery
                       ? "Transport to site/Landfill"

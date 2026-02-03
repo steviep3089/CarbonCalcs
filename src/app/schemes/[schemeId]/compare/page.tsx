@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { AuthGate } from "@/components/AuthGate";
 import { ScenarioCompareGrid, type CompareItem } from "@/components/ScenarioCompareGrid";
 import { ScenarioCompareCharts } from "@/components/ScenarioCompareCharts";
+import { ScenarioCompareMap } from "@/components/ScenarioCompareMap";
 
 type PageProps = {
   params: Promise<{ schemeId: string }>;
@@ -11,6 +12,7 @@ type PageProps = {
 type Snapshot = {
   scheme_products?: Array<{
     product_id: string | null;
+    plant_id: string | null;
     mix_type_id: string | null;
     delivery_type: string | null;
     tonnage: number | null;
@@ -40,6 +42,14 @@ type Snapshot = {
 const toDistance = (km: number, unit: string) =>
   unit === "mi" ? km / 1.60934 : km;
 
+type PlantMixFactor = {
+  plant_id: string;
+  mix_type_id: string;
+  product_id: string | null;
+  kgco2e_per_tonne: number | null;
+  is_default?: boolean | null;
+};
+
 export default async function ComparePage({ params, searchParams }: PageProps) {
   const { schemeId } = await params;
   const { items } = (await searchParams) ?? {};
@@ -51,7 +61,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   const supabase = await createSupabaseServerClient();
   const { data: scheme } = await supabase
     .from("schemes")
-    .select("id, name, distance_unit")
+    .select("id, name, distance_unit, plant_id")
     .eq("id", schemeId)
     .single();
 
@@ -75,8 +85,26 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     .eq("scheme_id", schemeId)
     .in("id", scenarioIds);
 
+  const { data: mapLayouts } = await supabase
+    .from("report_equivalency_layouts")
+    .select("key, x, y, scale")
+    .ilike("key", "compare-map-%");
+
   const scenarioById = new Map(
     (scenarioRows ?? []).map((row) => [row.id, row])
+  );
+
+  const toNumber = (value: unknown) => {
+    if (value === null || value === undefined) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const collectProducts = (snapshot?: Snapshot | null) =>
+    (snapshot?.scheme_products ?? []).filter((row) => row.mix_type_id);
+
+  const scenarioProducts = (scenarioRows ?? []).flatMap((row) =>
+    collectProducts(row.snapshot as Snapshot | null)
   );
 
   const buildNarrative = (
@@ -282,47 +310,137 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
 
   const compareItems: CompareItem[] = [];
 
-  if (selected.includes("live")) {
-    const { data: liveProducts } = await supabase
-      .from("scheme_products")
-      .select("product_id, mix_type_id, delivery_type, tonnage, distance_km, distance_unit")
-      .eq("scheme_id", schemeId);
+  const livePayload = selected.includes("live")
+    ? await (async () => {
+        const { data: liveProducts } = await supabase
+          .from("scheme_products")
+          .select(
+            "product_id, plant_id, mix_type_id, delivery_type, tonnage, distance_km, distance_unit"
+          )
+          .eq("scheme_id", schemeId);
 
-    const { data: liveInstall } = await supabase
-      .from("scheme_installation_items")
-      .select("category")
-      .eq("scheme_id", schemeId);
+        const { data: liveInstall } = await supabase
+          .from("scheme_installation_items")
+          .select("category")
+          .eq("scheme_id", schemeId);
 
-    const { data: liveResults } = await supabase
-      .from("scheme_carbon_results")
-      .select(
-        "lifecycle_stage, total_kgco2e, kgco2e_per_tonne, detail_label, product_id, mix_type_id"
-      )
-      .eq("scheme_id", schemeId)
-      .order("lifecycle_stage");
+        const { data: liveResults } = await supabase
+          .from("scheme_carbon_results")
+          .select(
+            "lifecycle_stage, total_kgco2e, kgco2e_per_tonne, detail_label, product_id, mix_type_id"
+          )
+          .eq("scheme_id", schemeId)
+          .order("lifecycle_stage");
 
-    const { data: liveSummary } = await supabase
-      .from("scheme_carbon_summaries")
-      .select("total_kgco2e, kgco2e_per_tonne")
-      .eq("scheme_id", schemeId)
-      .maybeSingle();
+        const { data: liveSummary } = await supabase
+          .from("scheme_carbon_summaries")
+          .select("total_kgco2e, kgco2e_per_tonne")
+          .eq("scheme_id", schemeId)
+          .maybeSingle();
 
+        return {
+          products: liveProducts ?? [],
+          install: liveInstall ?? [],
+          results: liveResults ?? [],
+          summary: liveSummary ?? null,
+        };
+      })()
+    : null;
+
+  const plantIds = new Set<string>();
+  if (scheme?.plant_id) {
+    plantIds.add(scheme.plant_id);
+  }
+  scenarioProducts.forEach((row) => {
+    if (row.plant_id) {
+      plantIds.add(row.plant_id);
+    }
+  });
+  livePayload?.products.forEach((row) => {
+    if (row.plant_id) {
+      plantIds.add(row.plant_id);
+    }
+  });
+
+  const plantIdList = Array.from(plantIds);
+  const { data: plantMixFactors } = plantIdList.length
+    ? await supabase
+        .from("plant_mix_carbon_factors")
+        .select("plant_id, mix_type_id, product_id, kgco2e_per_tonne, is_default")
+        .in("plant_id", plantIdList)
+        .is("valid_to", null)
+    : { data: [] as PlantMixFactor[] };
+
+  const factorByKey = new Map<string, PlantMixFactor>();
+  const defaultFactorByPlant = new Map<string, PlantMixFactor>();
+  (plantMixFactors ?? []).forEach((row) => {
+    const key = `${row.plant_id}::${row.mix_type_id}::${row.product_id ?? "null"}`;
+    factorByKey.set(key, row);
+    if (row.is_default) {
+      defaultFactorByPlant.set(row.plant_id, row);
+    }
+  });
+
+  const resolveMixFactor = (
+    plantId: string | null,
+    mixTypeId: string | null,
+    productId: string | null
+  ) => {
+    if (!plantId || !mixTypeId) return null;
+    const exact = factorByKey.get(`${plantId}::${mixTypeId}::${productId ?? "null"}`);
+    if (toNumber(exact?.kgco2e_per_tonne) !== null) {
+      return toNumber(exact?.kgco2e_per_tonne);
+    }
+    const fallback = factorByKey.get(`${plantId}::${mixTypeId}::null`);
+    if (toNumber(fallback?.kgco2e_per_tonne) !== null) {
+      return toNumber(fallback?.kgco2e_per_tonne);
+    }
+    const defaultRow = defaultFactorByPlant.get(plantId);
+    return toNumber(defaultRow?.kgco2e_per_tonne);
+  };
+
+  const computeA1Factor = (products: Snapshot["scheme_products"] = []) => {
+    const delivered = products.filter(
+      (row) => (row.delivery_type ?? "delivery").toLowerCase() === "delivery"
+    );
+
+    const factorByProduct = new Map<string, number>();
+    delivered.forEach((row, index) => {
+      if (!row.mix_type_id) return;
+      const plantId = row.plant_id ?? scheme?.plant_id ?? null;
+      const factor = resolveMixFactor(plantId, row.mix_type_id, row.product_id ?? null);
+      if (factor === null) return;
+      const key = row.product_id ?? `row-${index}`;
+      if (!factorByProduct.has(key)) {
+        factorByProduct.set(key, factor);
+      }
+    });
+
+    if (!factorByProduct.size) return null;
+    const total = Array.from(factorByProduct.values()).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+    return total / factorByProduct.size;
+  };
+
+  if (livePayload) {
     const unit = (scheme?.distance_unit ?? "km").toLowerCase() === "mi" ? "mi" : "km";
-
     compareItems.push({
       id: "live",
       title: "Live scheme",
       subtitle: scheme?.name ?? "Current scheme",
-      summary_total: liveSummary?.total_kgco2e ?? null,
-      summary_per_tonne: liveSummary?.kgco2e_per_tonne ?? null,
+      summary_total: livePayload.summary?.total_kgco2e ?? null,
+      summary_per_tonne: livePayload.summary?.kgco2e_per_tonne ?? null,
       narrative: buildNarrative(
         "Live scheme",
-        liveProducts ?? [],
-        liveInstall ?? [],
+        livePayload.products,
+        livePayload.install,
         unit
       ),
-      bullets: buildBullets(liveProducts ?? [], liveInstall ?? [], unit),
-      lifecycle: buildLifecycle(liveResults ?? []),
+      bullets: buildBullets(livePayload.products, livePayload.install, unit),
+      lifecycle: buildLifecycle(livePayload.results),
+      a1Factor: computeA1Factor(livePayload.products),
     });
   }
 
@@ -350,6 +468,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
         unit
       ),
       lifecycle: buildLifecycle(snapshot.scheme_carbon_results ?? []),
+      a1Factor: computeA1Factor(snapshot.scheme_products ?? []),
     });
   });
 
@@ -392,6 +511,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
         </header>
         <ScenarioCompareGrid items={compareItems} />
         <ScenarioCompareCharts items={compareItems} />
+        <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} />
       </main>
     </AuthGate>
   );

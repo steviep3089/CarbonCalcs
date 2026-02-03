@@ -26,6 +26,7 @@ export type CompareItem = {
   narrative: string;
   bullets: string[];
   lifecycle: LifecycleStage[];
+  a1Factor?: number | null;
 };
 
 const formatNumber = (value: number | null, digits = 2) => {
