@@ -335,7 +335,7 @@ function ManufacturingTab({
               <a
                 className="btn-secondary"
                 href={`data:text/csv;charset=utf-8,${encodeURIComponent(
-                  "name,location,description\nExample Plant,cv09 02rs,Main asphalt plant"
+                  "name,location,description,is_default\nExample Plant,cv09 02rs,Main asphalt plant,false"
                 )}`}
                 download="plants-template.csv"
               >
