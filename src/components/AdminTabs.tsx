@@ -334,10 +334,8 @@ function ManufacturingTab({
               <input name="file" type="file" accept=".csv" />
               <a
                 className="btn-secondary"
-                href={`data:text/csv;charset=utf-8,${encodeURIComponent(
-                  "name,location,description,is_default\nExample Plant,cv09 02rs,Main asphalt plant,false"
-                )}`}
-                download="plants-template.csv"
+                href="/templates/plants-template.xlsx"
+                download
               >
                 Template
               </a>
@@ -817,10 +815,8 @@ function MaterialCreationTab({
           <input name="file" type="file" accept=".csv" />
           <a
             className="btn-secondary"
-            href={`data:text/csv;charset=utf-8,${encodeURIComponent(
-              "plant_name,mix_type,product_name,kgco2e_per_tonne,valid_from,valid_to,source,a1_includes_raw_materials\nMoorcroft,HOT,TSCS,55,2026-01-03,,manual,false"
-            )}`}
-            download="materials-template.csv"
+            href="/templates/materials-template.xlsx"
+            download
           >
             Template
           </a>
@@ -1135,10 +1131,8 @@ function InstallationTab({
             <input name="file" type="file" accept=".csv" />
             <a
               className="btn-secondary"
-              href={`data:text/csv;charset=utf-8,${encodeURIComponent(
-                "plant_name,category,spread_rate_t_per_m2,kgco2_per_t,kgco2_per_ltr,kgco2e,kgco2e_per_km,kgco2e_unit,litres_per_t,is_default\nExample Plant,Plant,0.03,5.2,0.45,4.2,0.9,km,12.5,false"
-              )}`}
-              download="installation-setups-template.csv"
+              href="/templates/installation-setups-template.xlsx"
+              download
             >
               Template
             </a>
@@ -2041,12 +2035,8 @@ function ReportsTab({
             <input name="file" type="file" accept=".csv" />
             <a
               className="btn-secondary"
-              href={`data:text/csv;charset=utf-8,${encodeURIComponent(
-                "kind,label,unit,value,calc_op,calc_factor,source,source_url,sort_order,is_active\n" +
-                  "equivalency,Return Flight to Sydney,flight,1.5779,x,1,ICAO,https://www.icao.int,10,true\n" +
-                  "savings,Vehicle mileage savings WMA,miles,2181,,,https://example.com,10,true"
-              )}`}
-              download="report-metrics-template.csv"
+              href="/templates/report-metrics-template.xlsx"
+              download
             >
               Template
             </a>
