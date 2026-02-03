@@ -54,6 +54,16 @@ async function getBaseUrl() {
   return `${proto}://${host}`;
 }
 
+function getConfiguredBaseUrl() {
+  const explicit =
+    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+  if (explicit) return explicit;
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return null;
+}
+
 export async function inviteUser(
   _prevState: ActionState,
   formData: FormData
@@ -75,9 +85,9 @@ export async function inviteUser(
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const baseUrl = await getBaseUrl();
+  const baseUrl = getConfiguredBaseUrl() ?? (await getBaseUrl());
   const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${baseUrl}/reset`,
+    redirectTo: new URL("/reset", baseUrl).toString(),
   });
 
   if (error) {
