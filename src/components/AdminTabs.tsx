@@ -268,9 +268,7 @@ export function AdminTabs({
   return (
     <section className="admin-tabs">
       <div className="admin-tab-list">
-        {tabs
-          .filter((tab) => tab.id !== "users")
-          .map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
