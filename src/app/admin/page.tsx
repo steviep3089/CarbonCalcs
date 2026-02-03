@@ -135,9 +135,6 @@ export default async function AdminPage() {
             </div>
             <div className="admin-header-actions">
               <ThemeToggle />
-              <a className="btn-secondary" href="/admin?tab=users">
-                User access
-              </a>
               <a className="btn-secondary" href="/schemes">
                 Back to schemes
               </a>
