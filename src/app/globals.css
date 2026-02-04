@@ -1994,6 +1994,10 @@ h3,
   justify-content: center;
 }
 
+.compare-map-wrap.is-fullscreen .compare-map-zoom {
+  width: 90%;
+  height: 90%;
+}
 .compare-map-zoom {
   width: 100%;
   transform-origin: center;
