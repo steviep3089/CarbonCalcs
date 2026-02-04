@@ -1995,8 +1995,20 @@ h3,
 }
 
 .compare-map-wrap.is-fullscreen .compare-map-zoom {
-  width: 90%;
-  height: 90%;
+  width: 90vw;
+  height: 90vh;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compare-map-wrap.is-fullscreen .compare-map-image {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 .compare-map-zoom {
   width: 100%;
