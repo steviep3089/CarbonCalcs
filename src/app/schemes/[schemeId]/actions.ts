@@ -14,23 +14,18 @@ const convertToKm = (value: number, unit: string) =>
 const normalizePostcode = (value: string | null | undefined) =>
   (value ?? "").trim().replace(/\s+/g, "").toUpperCase();
 
-const UK_POSTCODE_REGEX =
-  /^(GIR0AA|[A-PR-UWYZ][A-HK-Y]?\d[0-9A-HJKSTUW]?|[A-PR-UWYZ]\d[A-HJKSTUW]|[A-PR-UWYZ][A-HK-Y]\d[ABEHMNPRV-Y])\d[ABD-HJLNP-UW-Z]{2}$/;
-
 const UK_POSTCODE_FINDER_REGEX =
   /\b(GIR\s?0AA|(?:[A-PR-UWYZ][A-HK-Y]?\d[0-9A-HJKSTUW]?|[A-PR-UWYZ]\d[A-HJKSTUW]|[A-PR-UWYZ][A-HK-Y]\d[ABEHMNPRV-Y])\s?\d[ABD-HJLNP-UW-Z]{2})\b/i;
-
-const isLikelyUkPostcode = (value: string) => UK_POSTCODE_REGEX.test(value);
 
 const extractLikelyUkPostcode = (value: string | null | undefined) => {
   const source = (value ?? "").trim().toUpperCase();
   if (!source) return null;
   const direct = normalizePostcode(source);
-  if (isLikelyUkPostcode(direct)) return direct;
+  if (direct.length >= 5 && direct.length <= 8) return direct;
   const match = source.match(UK_POSTCODE_FINDER_REGEX);
   if (!match?.[1]) return null;
   const extracted = normalizePostcode(match[1]);
-  return isLikelyUkPostcode(extracted) ? extracted : null;
+  return extracted.length >= 5 && extracted.length <= 8 ? extracted : null;
 };
 
 const haversineKm = (
@@ -512,25 +507,15 @@ export async function addSchemeProduct(
     : schemeDistanceUnit;
   const rawPlantPostcode = (plant.location ?? "").trim();
   const rawSitePostcode = (schemeRow?.site_postcode ?? "").trim();
-  const plantPostcode = extractLikelyUkPostcode(rawPlantPostcode);
-  const sitePostcode = extractLikelyUkPostcode(rawSitePostcode);
+  const plantPostcode =
+    extractLikelyUkPostcode(rawPlantPostcode) ?? normalizePostcode(rawPlantPostcode);
+  const sitePostcode =
+    extractLikelyUkPostcode(rawSitePostcode) ?? normalizePostcode(rawSitePostcode);
   let distance_km: number | null = null;
 
   if (distanceInput !== null) {
     distance_km = convertToKm(distanceInput, distanceUnit);
   } else if (plantPostcode && sitePostcode) {
-    if (!isLikelyUkPostcode(sitePostcode)) {
-      return {
-        ok: false,
-        error: `Site postcode appears invalid: ${rawSitePostcode}`,
-      };
-    }
-    if (!isLikelyUkPostcode(plantPostcode)) {
-      return {
-        ok: false,
-        error: `Plant postcode appears invalid: ${rawPlantPostcode}`,
-      };
-    }
     const [isSiteResolvable, isPlantResolvable] = await Promise.all([
       validateResolvablePostcode(sitePostcode),
       validateResolvablePostcode(plantPostcode),
@@ -564,18 +549,6 @@ export async function addSchemeProduct(
     }
     if (!rawPlantPostcode) {
       return { ok: false, error: "Plant postcode is missing. Update the plant location or enter distance manually." };
-    }
-    if (!sitePostcode) {
-      return {
-        ok: false,
-        error: `Site postcode appears invalid: ${rawSitePostcode}`,
-      };
-    }
-    if (!plantPostcode) {
-      return {
-        ok: false,
-        error: `Plant postcode appears invalid: ${rawPlantPostcode}`,
-      };
     }
     return {
       ok: false,
