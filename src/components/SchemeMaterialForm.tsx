@@ -97,6 +97,22 @@ export function SchemeMaterialForm({
   return (
     <form action={action} className="scheme-form">
       <label>
+        Plant
+        <select
+          name="plant_id"
+          value={plantId}
+          onChange={(event) => setPlantId(event.target.value)}
+        >
+          <option value="">Select plant</option>
+          {plants.map((plant) => (
+            <option key={plant.id} value={plant.id}>
+              {plant.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
         Product
         <select
           name="product_id"
@@ -112,22 +128,6 @@ export function SchemeMaterialForm({
           {filteredProducts.map((product) => (
             <option key={product.id} value={product.id}>
               {product.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label>
-        Plant
-        <select
-          name="plant_id"
-          value={plantId}
-          onChange={(event) => setPlantId(event.target.value)}
-        >
-          <option value="">Select plant</option>
-          {plants.map((plant) => (
-            <option key={plant.id} value={plant.id}>
-              {plant.name}
             </option>
           ))}
         </select>
