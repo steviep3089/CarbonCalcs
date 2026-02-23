@@ -14,6 +14,11 @@ const convertToKm = (value: number, unit: string) =>
 const normalizePostcode = (value: string | null | undefined) =>
   (value ?? "").trim().replace(/\s+/g, "").toUpperCase();
 
+const UK_POSTCODE_REGEX =
+  /^(GIR0AA|[A-PR-UWYZ][A-HK-Y]?\d[0-9A-HJKSTUW]?|[A-PR-UWYZ]\d[A-HJKSTUW]|[A-PR-UWYZ][A-HK-Y]\d[ABEHMNPRV-Y])\d[ABD-HJLNP-UW-Z]{2}$/;
+
+const isLikelyUkPostcode = (value: string) => UK_POSTCODE_REGEX.test(value);
+
 const haversineKm = (
   lat1: number,
   lon1: number,
@@ -489,6 +494,13 @@ export async function addSchemeProduct(
   if (distanceInput !== null) {
     distance_km = convertToKm(distanceInput, distanceUnit);
   } else if (plantPostcode && sitePostcode) {
+    if (!isLikelyUkPostcode(sitePostcode) || !isLikelyUkPostcode(plantPostcode)) {
+      return {
+        ok: false,
+        error:
+          "Could not calculate distance from postcodes. Check the site and plant postcodes, or enter distance manually.",
+      };
+    }
     try {
       distance_km = await getPostcodeDistanceKm(sitePostcode, plantPostcode);
     } catch {
