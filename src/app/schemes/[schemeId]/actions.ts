@@ -81,6 +81,15 @@ async function getPostcodeDistanceKm(fromPostcode: string, toPostcode: string) {
   return haversineKm(from.lat, from.lon, to.lat, to.lon);
 }
 
+async function validateResolvablePostcode(postcode: string) {
+  try {
+    await geocodePostcode(postcode);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function getSchemeDistanceUnit(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   schemeId: string
@@ -494,11 +503,32 @@ export async function addSchemeProduct(
   if (distanceInput !== null) {
     distance_km = convertToKm(distanceInput, distanceUnit);
   } else if (plantPostcode && sitePostcode) {
-    if (!isLikelyUkPostcode(sitePostcode) || !isLikelyUkPostcode(plantPostcode)) {
+    if (!isLikelyUkPostcode(sitePostcode)) {
       return {
         ok: false,
-        error:
-          "Could not calculate distance from postcodes. Check the site and plant postcodes, or enter distance manually.",
+        error: `Site postcode appears invalid: ${sitePostcode}`,
+      };
+    }
+    if (!isLikelyUkPostcode(plantPostcode)) {
+      return {
+        ok: false,
+        error: `Plant postcode appears invalid: ${plantPostcode}`,
+      };
+    }
+    const [isSiteResolvable, isPlantResolvable] = await Promise.all([
+      validateResolvablePostcode(sitePostcode),
+      validateResolvablePostcode(plantPostcode),
+    ]);
+    if (!isSiteResolvable) {
+      return {
+        ok: false,
+        error: `Site postcode not found: ${sitePostcode}`,
+      };
+    }
+    if (!isPlantResolvable) {
+      return {
+        ok: false,
+        error: `Plant postcode not found: ${plantPostcode}`,
       };
     }
     try {
