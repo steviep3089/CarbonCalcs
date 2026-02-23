@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 
 type Product = {
   id: string;
@@ -30,7 +30,7 @@ type PlantMixOption = {
 
 type SchemeMaterialFormProps = {
   schemeId: string;
-  action: (formData: FormData) => void;
+  action: (formData: FormData) => Promise<{ ok?: boolean; error?: string }>;
   products: Product[];
   plants: Plant[];
   mixTypes: MixType[];
@@ -42,6 +42,11 @@ type SchemeMaterialFormProps = {
   defaultTransportModeId?: string | null;
   hasSitePostcode: boolean;
   distanceLabel: string;
+};
+
+type ActionState = {
+  ok?: boolean;
+  error?: string;
 };
 
 export function SchemeMaterialForm({
@@ -59,6 +64,10 @@ export function SchemeMaterialForm({
   hasSitePostcode,
   distanceLabel,
 }: SchemeMaterialFormProps) {
+  const [state, formAction] = useActionState<ActionState, FormData>(
+    async (_prev, formData) => action(formData),
+    {}
+  );
   const [plantId, setPlantId] = useState(defaultPlantId ?? "");
   const [productId, setProductId] = useState(defaultProductId ?? "");
   const [mixTypeId, setMixTypeId] = useState(defaultMixTypeId ?? "");
@@ -95,7 +104,7 @@ export function SchemeMaterialForm({
   }, [availableProductIds, productId]);
 
   return (
-    <form action={action} className="scheme-form">
+    <form action={formAction} className="scheme-form">
       <label>
         Plant
         <select
@@ -230,6 +239,8 @@ export function SchemeMaterialForm({
       <button className="btn-primary" type="submit">
         Add material
       </button>
+      {state?.error ? <p className="create-scheme-message error">{state.error}</p> : null}
+      {state?.ok ? <p className="create-scheme-message success">Material added.</p> : null}
     </form>
   );
 }

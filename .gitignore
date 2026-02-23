@@ -27,6 +27,7 @@
 # local files
 /Neils Forms/
 supabase-public.dump
+supabase-dump.sql
 
 # debug
 npm-debug.log*

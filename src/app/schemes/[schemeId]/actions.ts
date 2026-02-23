@@ -418,7 +418,7 @@ export async function addSchemeProduct(
   formData: FormData
 ) {
   if (!schemeId) {
-    throw new Error("No schemeId provided");
+    return { ok: false, error: "No schemeId provided" };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -428,7 +428,7 @@ export async function addSchemeProduct(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Unauthorized");
+    return { ok: false, error: "Unauthorized" };
   }
 
   const product_id = formData.get("product_id") as string;
@@ -443,18 +443,18 @@ export async function addSchemeProduct(
     distanceValue.trim() === "" ? null : Number(distanceValue);
 
   if (!product_id || !plant_id || !mix_type_id || Number.isNaN(tonnage)) {
-    throw new Error("Missing required fields");
+    return { ok: false, error: "Missing required fields" };
   }
   if (tonnage <= 0) {
-    throw new Error("Tonnage must be greater than 0");
+    return { ok: false, error: "Tonnage must be greater than 0" };
   }
 
   if (distanceInput !== null && Number.isNaN(distanceInput)) {
-    throw new Error("Invalid distance");
+    return { ok: false, error: "Invalid distance" };
   }
 
   if (!["delivery", "return", "tip"].includes(delivery_type)) {
-    throw new Error("Invalid delivery type");
+    return { ok: false, error: "Invalid delivery type" };
   }
 
   // Fetch plant postcode (stored as location) and scheme site postcode
@@ -465,7 +465,7 @@ export async function addSchemeProduct(
     .single();
 
   if (plantError || !plant) {
-    throw new Error("Unable to fetch plant location");
+    return { ok: false, error: "Unable to fetch plant location" };
   }
 
   const { data: schemeRow, error: schemeRowError } = await supabase
@@ -475,7 +475,7 @@ export async function addSchemeProduct(
     .single();
 
   if (schemeRowError) {
-    throw new Error("Unable to fetch scheme site postcode");
+    return { ok: false, error: "Unable to fetch scheme site postcode" };
   }
 
   const schemeDistanceUnit = await getSchemeDistanceUnit(supabase, schemeId);
@@ -489,13 +489,23 @@ export async function addSchemeProduct(
   if (distanceInput !== null) {
     distance_km = convertToKm(distanceInput, distanceUnit);
   } else if (plantPostcode && sitePostcode) {
-    distance_km = await getPostcodeDistanceKm(sitePostcode, plantPostcode);
+    try {
+      distance_km = await getPostcodeDistanceKm(sitePostcode, plantPostcode);
+    } catch {
+      return {
+        ok: false,
+        error:
+          "Could not calculate distance from postcodes. Check the site and plant postcodes, or enter distance manually.",
+      };
+    }
   }
 
   if (distance_km === null) {
-    throw new Error(
-      "Enter a distance or set both the scheme site postcode and plant postcode."
-    );
+    return {
+      ok: false,
+      error:
+        "Enter a distance or set both the scheme site postcode and plant postcode.",
+    };
   }
 
   const { error } = await supabase.from("scheme_products").insert({
@@ -512,7 +522,7 @@ export async function addSchemeProduct(
   });
 
   if (error) {
-    throw new Error(error.message);
+    return { ok: false, error: error.message };
   }
 
   const { data: schemeMode } = await supabase
@@ -522,7 +532,15 @@ export async function addSchemeProduct(
     .single();
 
   if ((schemeMode?.a5_fuel_mode ?? "auto").toLowerCase() === "auto") {
-    await autoCalculateA5PlantUsage(schemeId);
+    const autoUsageState = await autoCalculateA5PlantUsage(schemeId);
+    if (!autoUsageState?.ok) {
+      return {
+        ok: false,
+        error:
+          autoUsageState?.error ??
+          "Material added, but failed to auto-calculate A5 usage.",
+      };
+    }
   }
 
   const { error: recalcError } = await supabase.rpc("calculate_scheme_carbon", {
@@ -530,7 +548,7 @@ export async function addSchemeProduct(
   });
 
   if (recalcError) {
-    throw new Error(recalcError.message);
+    return { ok: false, error: recalcError.message };
   }
 
   revalidatePath(`/schemes/${schemeId}`);
