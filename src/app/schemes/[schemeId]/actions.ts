@@ -63,6 +63,33 @@ async function geocodePostcode(postcode: string) {
   };
 }
 
+const buildPostcodeCandidates = (postcode: string) => {
+  const normalized = normalizePostcode(postcode);
+  const variants = new Set<string>([normalized]);
+
+  if (/^[A-Z]0/.test(normalized)) {
+    variants.add(`${normalized[0]}O${normalized.slice(2)}`);
+  }
+  if (/^[A-Z]O/.test(normalized)) {
+    variants.add(`${normalized[0]}0${normalized.slice(2)}`);
+  }
+
+  return Array.from(variants).filter(Boolean);
+};
+
+async function resolvePostcode(postcode: string) {
+  const candidates = buildPostcodeCandidates(postcode);
+  for (const candidate of candidates) {
+    try {
+      await geocodePostcode(candidate);
+      return candidate;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 async function getRoadDistanceKm(
   from: { lat: number; lon: number },
   to: { lat: number; lon: number }
@@ -91,12 +118,8 @@ async function getPostcodeDistanceKm(fromPostcode: string, toPostcode: string) {
 }
 
 async function validateResolvablePostcode(postcode: string) {
-  try {
-    await geocodePostcode(postcode);
-    return true;
-  } catch {
-    return false;
-  }
+  const resolved = await resolvePostcode(postcode);
+  return Boolean(resolved);
 }
 
 async function getSchemeDistanceUnit(
@@ -516,24 +539,27 @@ export async function addSchemeProduct(
   if (distanceInput !== null) {
     distance_km = convertToKm(distanceInput, distanceUnit);
   } else if (plantPostcode && sitePostcode) {
-    const [isSiteResolvable, isPlantResolvable] = await Promise.all([
-      validateResolvablePostcode(sitePostcode),
-      validateResolvablePostcode(plantPostcode),
+    const [resolvedSitePostcode, resolvedPlantPostcode] = await Promise.all([
+      resolvePostcode(sitePostcode),
+      resolvePostcode(plantPostcode),
     ]);
-    if (!isSiteResolvable) {
+    if (!resolvedSitePostcode) {
       return {
         ok: false,
         error: `Site postcode not found: ${rawSitePostcode}`,
       };
     }
-    if (!isPlantResolvable) {
+    if (!resolvedPlantPostcode) {
       return {
         ok: false,
         error: `Plant postcode not found: ${rawPlantPostcode}`,
       };
     }
     try {
-      distance_km = await getPostcodeDistanceKm(sitePostcode, plantPostcode);
+      distance_km = await getPostcodeDistanceKm(
+        resolvedSitePostcode,
+        resolvedPlantPostcode
+      );
     } catch {
       return {
         ok: false,
