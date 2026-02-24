@@ -2550,11 +2550,8 @@ h3,
   margin-top: 16px;
 }
 
-.plant-card-wrap {
-  position: relative;
-}
-
 .plant-card {
+  position: relative;
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 14px;

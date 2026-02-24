@@ -364,28 +364,36 @@ function ManufacturingTab({
           {plants.map((plant) => {
             const isActive = plant.id === selectedPlantId;
             return (
-              <div key={plant.id} className="plant-card-wrap">
-                <button
-                  type="button"
-                  className={`plant-card ${isActive ? "active" : ""}`}
-                  onClick={() => {
+              <div
+                key={plant.id}
+                className={`plant-card ${isActive ? "active" : ""}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setSelectedPlantId(plant.id);
+                  setEditingPlantId(null);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
                     setSelectedPlantId(plant.id);
                     setEditingPlantId(null);
-                  }}
-                >
-                  <div>
-                    <h3>{plant.name}</h3>
-                    <p>{plant.location ?? "No location"}</p>
-                  </div>
-                  <div className="plant-card-meta">
-                    {plant.description ? <span>{plant.description}</span> : null}
-                    {plant.is_default ? <span className="scheme-muted">Default</span> : null}
-                  </div>
-                </button>
+                  }
+                }}
+              >
+                <div>
+                  <h3>{plant.name}</h3>
+                  <p>{plant.location ?? "No location"}</p>
+                </div>
+                <div className="plant-card-meta">
+                  {plant.description ? <span>{plant.description}</span> : null}
+                  {plant.is_default ? <span className="scheme-muted">Default</span> : null}
+                </div>
                 <button
                   type="button"
                   className="plant-card-edit-badge"
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation();
                     setSelectedPlantId(plant.id);
                     setEditingPlantId(plant.id);
                   }}
