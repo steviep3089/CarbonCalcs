@@ -387,17 +387,32 @@ function ManufacturingTab({
             {selectedPlant ? (
               <form action={actions.updatePlant} className="plant-default-form">
                 <input type="hidden" name="id" value={selectedPlant.id} />
-                <input type="hidden" name="name" value={selectedPlant.name} />
-                <input
-                  type="hidden"
-                  name="location"
-                  value={selectedPlant.location ?? ""}
-                />
-                <input
-                  type="hidden"
-                  name="description"
-                  value={selectedPlant.description ?? ""}
-                />
+                <div className="material-grid material-grid-tight">
+                  <label>
+                    Plant name
+                    <input
+                      name="name"
+                      defaultValue={selectedPlant.name}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Location / postcode
+                    <input
+                      name="location"
+                      defaultValue={selectedPlant.location ?? ""}
+                      placeholder="Location / postcode"
+                    />
+                  </label>
+                  <label>
+                    Description
+                    <input
+                      name="description"
+                      defaultValue={selectedPlant.description ?? ""}
+                      placeholder="Description"
+                    />
+                  </label>
+                </div>
                 <label className="admin-inline-checkbox">
                   <input
                     type="checkbox"
@@ -407,7 +422,7 @@ function ManufacturingTab({
                   Default plant for new material lines
                 </label>
                 <button className="btn-secondary" type="submit">
-                  Save
+                  Save plant details
                 </button>
               </form>
             ) : null}
