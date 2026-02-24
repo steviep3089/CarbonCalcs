@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import * as XLSX from "xlsx";
 
 type ExportType =
   | "plants"
@@ -8,29 +9,44 @@ type ExportType =
   | "report-metrics";
 
 const FILE_NAMES: Record<ExportType, string> = {
-  plants: "plants-data.csv",
-  materials: "materials-data.csv",
-  "installation-setups": "installation-setups-data.csv",
-  "report-metrics": "report-metrics-data.csv",
+  plants: "plants-data.xlsx",
+  materials: "materials-data.xlsx",
+  "installation-setups": "installation-setups-data.xlsx",
+  "report-metrics": "report-metrics-data.xlsx",
 };
 
 type SupabaseClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
-function escapeCsvValue(value: unknown) {
+function toCellText(value: unknown) {
   if (value === null || value === undefined) return "";
-  const raw = String(value);
-  if (/[",\n\r]/.test(raw)) {
-    return `"${raw.replace(/"/g, '""')}"`;
-  }
-  return raw;
+  return String(value);
 }
 
-function toCsv(headers: string[], rows: Array<Record<string, unknown>>) {
-  const headerLine = headers.join(",");
-  const rowLines = rows.map((row) =>
-    headers.map((header) => escapeCsvValue(row[header])).join(",")
+function buildWorkbookBuffer(
+  sheetName: string,
+  headers: string[],
+  rows: Array<Record<string, unknown>>
+) {
+  const worksheetRows = rows.map((row) =>
+    Object.fromEntries(headers.map((header) => [header, row[header] ?? ""]))
   );
-  return [headerLine, ...rowLines].join("\n");
+
+  const worksheet = XLSX.utils.json_to_sheet(worksheetRows, {
+    header: headers,
+  });
+
+  worksheet["!cols"] = headers.map((header) => {
+    const maxDataLength = rows.reduce((max, row) => {
+      const length = toCellText(row[header]).length;
+      return Math.max(max, length);
+    }, 0);
+    const width = Math.min(80, Math.max(10, Math.max(header.length, maxDataLength) + 2));
+    return { wch: width };
+  });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 }
 
 function boolText(value: boolean | null | undefined) {
@@ -64,7 +80,7 @@ async function exportPlants(supabase: SupabaseClient) {
     is_default: boolText(row.is_default ?? false),
   }));
 
-  return { csv: toCsv(headers, rows) };
+  return { headers, rows, sheetName: "Plants" };
 }
 
 async function exportMaterials(supabase: SupabaseClient) {
@@ -125,7 +141,7 @@ async function exportMaterials(supabase: SupabaseClient) {
     };
   });
 
-  return { csv: toCsv(headers, rows) };
+  return { headers, rows, sheetName: "Materials" };
 }
 
 async function exportInstallationSetups(
@@ -168,7 +184,7 @@ async function exportInstallationSetups(
     is_default: boolText(row.is_default ?? false),
   }));
 
-  return { csv: toCsv(headers, rows) };
+  return { headers, rows, sheetName: "Installation" };
 }
 
 async function exportReportMetrics(supabase: SupabaseClient) {
@@ -209,7 +225,7 @@ async function exportReportMetrics(supabase: SupabaseClient) {
     is_active: boolText(row.is_active ?? true),
   }));
 
-  return { csv: toCsv(headers, rows) };
+  return { headers, rows, sheetName: "Report Metrics" };
 }
 
 export async function GET(request: Request) {
@@ -233,7 +249,14 @@ export async function GET(request: Request) {
     );
   }
 
-  let result: { csv?: string; error?: string };
+  let result:
+    | {
+        headers: string[];
+        rows: Array<Record<string, unknown>>;
+        sheetName: string;
+        error?: undefined;
+      }
+    | { error: string };
 
   if (type === "plants") {
     result = await exportPlants(supabase);
@@ -245,14 +268,16 @@ export async function GET(request: Request) {
     result = await exportReportMetrics(supabase);
   }
 
-  if (result.error) {
+  if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  return new NextResponse(result.csv ?? "", {
+  const buffer = buildWorkbookBuffer(result.sheetName, result.headers, result.rows);
+
+  return new NextResponse(buffer, {
     status: 200,
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="${FILE_NAMES[type]}"`,
       "Cache-Control": "no-store",
     },
