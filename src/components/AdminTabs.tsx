@@ -300,7 +300,9 @@ function ManufacturingTab({
   const [uploadPlantsState, uploadPlantsAction] = useActionState(actions.uploadPlants, {});
   const [showModal, setShowModal] = useState(false);
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null);
+  const [editingPlantId, setEditingPlantId] = useState<string | null>(null);
   const [editingFactorId, setEditingFactorId] = useState<string | null>(null);
+  const [, startPlantUpdateTransition] = useTransition();
 
   useEffect(() => {
     if (createPlantState?.success) {
@@ -362,30 +364,55 @@ function ManufacturingTab({
           {plants.map((plant) => {
             const isActive = plant.id === selectedPlantId;
             return (
-              <button
-                key={plant.id}
-                type="button"
-                className={`plant-card ${isActive ? "active" : ""}`}
-                onClick={() => setSelectedPlantId(plant.id)}
-              >
-                <div>
-                  <h3>{plant.name}</h3>
-                  <p>{plant.location ?? "No location"}</p>
-                </div>
-                <div className="plant-card-meta">
-                  {plant.description ? <span>{plant.description}</span> : null}
-                  {plant.is_default ? <span className="scheme-muted">Default</span> : null}
-                </div>
-              </button>
+              <div key={plant.id} className="plant-card-wrap">
+                <button
+                  type="button"
+                  className={`plant-card ${isActive ? "active" : ""}`}
+                  onClick={() => {
+                    setSelectedPlantId(plant.id);
+                    setEditingPlantId(null);
+                  }}
+                >
+                  <div>
+                    <h3>{plant.name}</h3>
+                    <p>{plant.location ?? "No location"}</p>
+                  </div>
+                  <div className="plant-card-meta">
+                    {plant.description ? <span>{plant.description}</span> : null}
+                    {plant.is_default ? <span className="scheme-muted">Default</span> : null}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="plant-card-edit-badge"
+                  onClick={() => {
+                    setSelectedPlantId(plant.id);
+                    setEditingPlantId(plant.id);
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
             );
           })}
         </div>
 
         {selectedPlantId ? (
           <div className="plant-detail">
-            <h3 className="display-text">Assigned mixes & products</h3>
-            {selectedPlant ? (
-              <form action={actions.updatePlant} className="plant-default-form">
+            {selectedPlant && editingPlantId === selectedPlant.id ? (
+              <form
+                key={selectedPlant.id}
+                action={actions.updatePlant}
+                className="plant-default-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  startPlantUpdateTransition(() => {
+                    actions.updatePlant(formData);
+                  });
+                  setEditingPlantId(null);
+                }}
+              >
                 <input type="hidden" name="id" value={selectedPlant.id} />
                 <div className="material-grid material-grid-tight">
                   <label>
@@ -421,11 +448,21 @@ function ManufacturingTab({
                   />
                   Default plant for new material lines
                 </label>
-                <button className="btn-secondary" type="submit">
-                  Save plant details
-                </button>
+                <div className="plant-factor-actions">
+                  <button className="btn-secondary" type="submit">
+                    Save plant details
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    type="button"
+                    onClick={() => setEditingPlantId(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </form>
             ) : null}
+            <h3 className="display-text">Assigned mixes & products</h3>
             <div className="plant-factor-list">
               {plantFactors.length ? (
                 plantFactors.map((row) => (
