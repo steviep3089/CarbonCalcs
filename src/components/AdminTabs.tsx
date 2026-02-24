@@ -341,6 +341,13 @@ function ManufacturingTab({
               >
                 Template
               </a>
+              <a
+                className="btn-secondary"
+                href="/api/admin/template-download?type=plants"
+                download="plants-data.csv"
+              >
+                Download
+              </a>
               <button className="btn-primary" type="submit">
                 Upload
               </button>
@@ -880,6 +887,13 @@ function MaterialCreationTab({
           >
             Template
           </a>
+          <a
+            className="btn-secondary"
+            href="/api/admin/template-download?type=materials"
+            download="materials-data.csv"
+          >
+            Download
+          </a>
           <button className="btn-primary" type="submit">
             Upload
           </button>
@@ -1195,6 +1209,13 @@ function InstallationTab({
               download
             >
               Template
+            </a>
+            <a
+              className="btn-secondary"
+              href="/api/admin/template-download?type=installation-setups"
+              download="installation-setups-data.csv"
+            >
+              Download
             </a>
             <button className="btn-primary" type="submit">
               Upload
@@ -2099,6 +2120,13 @@ function ReportsTab({
               download
             >
               Template
+            </a>
+            <a
+              className="btn-secondary"
+              href="/api/admin/template-download?type=report-metrics"
+              download="report-metrics-data.csv"
+            >
+              Download
             </a>
             <button className="btn-primary" type="submit">
               Upload
