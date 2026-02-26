@@ -67,7 +67,7 @@ export default function HomePage() {
               className="login-brand-logo"
             />
           </div>
-          <h2 className="login-brand-title">Carbon Report Contracting)</h2>
+          <h2 className="login-brand-title">Carbon Report Contracting</h2>
         </div>
 
         <section className="login-panel">
