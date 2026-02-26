@@ -512,6 +512,10 @@ function ManufacturingTab({
                         onClick={(event) => event.stopPropagation()}
                         onSubmit={() => setEditingFactorId(null)}
                       >
+                        <div className="plant-factor-edit-title">
+                          <strong>{row.mix_type_id}</strong>
+                          <span>{getJoinName(row.products) ?? "No product"}</span>
+                        </div>
                         <input type="hidden" name="id" value={row.id} />
                         <input type="hidden" name="plant_id" value={row.plant_id} />
                         <input type="hidden" name="mix_type_id" value={row.mix_type_id} />

@@ -3029,6 +3029,22 @@ h3,
   width: 100%;
 }
 
+.plant-factor-edit-title {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+}
+
+.plant-factor-edit-title strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.plant-factor-edit-title span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 .plant-factor-edit label {
   display: grid;
   gap: 6px;
