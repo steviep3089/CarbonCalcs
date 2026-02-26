@@ -65,6 +65,14 @@ export default function HomePage() {
               src="/api/branding/logo"
               alt="Holcim logo"
               className="login-brand-logo"
+              onLoad={() => {
+                console.info("[login/logo] loaded", { src: "/api/branding/logo" });
+              }}
+              onError={(event) => {
+                console.error("[login/logo] failed to load", {
+                  src: event.currentTarget.currentSrc || event.currentTarget.src,
+                });
+              }}
             />
           </div>
           <h2 className="login-brand-title">Carbon Report Contracting</h2>

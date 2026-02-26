@@ -37,6 +37,14 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/reset") ||
     path.startsWith("/api/branding/");
 
+  if (path.startsWith("/api/branding/")) {
+    console.info("[proxy] branding request", {
+      path,
+      isPublic,
+      hasUser: Boolean(user),
+    });
+  }
+
   if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
