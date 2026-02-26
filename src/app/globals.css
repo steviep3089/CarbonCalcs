@@ -144,6 +144,31 @@ h3,
   min-height: 100vh;
 }
 
+.login-brand-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.login-brand-left {
+  justify-self: start;
+}
+
+.login-brand-logo {
+  max-height: 64px;
+  width: auto;
+  display: block;
+}
+
+.login-brand-title {
+  margin: 0;
+  justify-self: center;
+  text-align: center;
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+}
+
 .login-panel {
   max-width: 520px;
   display: grid;
@@ -3423,6 +3448,15 @@ h3,
 @media (max-width: 900px) {
   .login-shell {
     grid-template-columns: 1fr;
+  }
+
+  .login-brand-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .login-brand-left {
+    justify-self: center;
   }
 }
 .admin-grid-head span {

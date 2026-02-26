@@ -59,6 +59,17 @@ export default function HomePage() {
       <div className="login-bg" aria-hidden="true" />
 
       <div className="login-shell">
+        <div className="login-brand-row">
+          <div className="login-brand-left">
+            <img
+              src="/api/branding/logo"
+              alt="Holcim logo"
+              className="login-brand-logo"
+            />
+          </div>
+          <h2 className="login-brand-title">Carbon Report Contracting)</h2>
+        </div>
+
         <section className="login-panel">
           <span className="login-meta">Carbon Calculator Portal</span>
           <h1>Grounded decisions for low-carbon schemes.</h1>
