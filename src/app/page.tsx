@@ -62,17 +62,9 @@ export default function HomePage() {
         <div className="login-brand-row">
           <div className="login-brand-left">
             <img
-              src="/api/branding/logo"
+              src="/branding/holcim.png"
               alt="Holcim logo"
               className="login-brand-logo"
-              onLoad={() => {
-                console.info("[login/logo] loaded", { src: "/api/branding/logo" });
-              }}
-              onError={(event) => {
-                console.error("[login/logo] failed to load", {
-                  src: event.currentTarget.currentSrc || event.currentTarget.src,
-                });
-              }}
             />
           </div>
           <h2 className="login-brand-title">Carbon Report Contracting</h2>
