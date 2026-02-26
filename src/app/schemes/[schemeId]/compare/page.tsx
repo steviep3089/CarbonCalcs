@@ -3,6 +3,7 @@ import { AuthGate } from "@/components/AuthGate";
 import { ScenarioCompareGrid, type CompareItem } from "@/components/ScenarioCompareGrid";
 import { ScenarioCompareCharts } from "@/components/ScenarioCompareCharts";
 import { ScenarioCompareMap } from "@/components/ScenarioCompareMap";
+import { ScenarioCompareRecycledSection } from "@/components/ScenarioCompareRecycledSection";
 
 type PageProps = {
   params: Promise<{ schemeId: string }>;
@@ -47,6 +48,7 @@ type PlantMixFactor = {
   mix_type_id: string;
   product_id: string | null;
   kgco2e_per_tonne: number | null;
+  recycled_materials_pct: number | null;
   is_default?: boolean | null;
 };
 
@@ -366,7 +368,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   const { data: plantMixFactors } = plantIdList.length
     ? await supabase
         .from("plant_mix_carbon_factors")
-        .select("plant_id, mix_type_id, product_id, kgco2e_per_tonne, is_default")
+        .select("plant_id, mix_type_id, product_id, kgco2e_per_tonne, recycled_materials_pct, is_default")
         .in("plant_id", plantIdList)
         .is("valid_to", null)
     : { data: [] as PlantMixFactor[] };
@@ -399,6 +401,24 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     return toNumber(defaultRow?.kgco2e_per_tonne);
   };
 
+  const resolveRecycledPct = (
+    plantId: string | null,
+    mixTypeId: string | null,
+    productId: string | null
+  ) => {
+    if (!plantId || !mixTypeId) return null;
+    const exact = factorByKey.get(`${plantId}::${mixTypeId}::${productId ?? "null"}`);
+    if (toNumber(exact?.recycled_materials_pct) !== null) {
+      return toNumber(exact?.recycled_materials_pct);
+    }
+    const fallback = factorByKey.get(`${plantId}::${mixTypeId}::null`);
+    if (toNumber(fallback?.recycled_materials_pct) !== null) {
+      return toNumber(fallback?.recycled_materials_pct);
+    }
+    const defaultRow = defaultFactorByPlant.get(plantId);
+    return toNumber(defaultRow?.recycled_materials_pct);
+  };
+
   const computeA1Factor = (products: Snapshot["scheme_products"] = []) => {
     const delivered = products.filter(
       (row) => (row.delivery_type ?? "delivery").toLowerCase() === "delivery"
@@ -424,6 +444,24 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     return total / factorByProduct.size;
   };
 
+  const computeRecycledPct = (products: Snapshot["scheme_products"] = []) => {
+    let weightedTotal = 0;
+    let totalTonnage = 0;
+
+    products.forEach((row) => {
+      if (!row.mix_type_id) return;
+      const plantId = row.plant_id ?? scheme?.plant_id ?? null;
+      const recycledPct = resolveRecycledPct(plantId, row.mix_type_id, row.product_id ?? null);
+      const tonnage = toNumber(row.tonnage) ?? 0;
+      if (recycledPct === null || tonnage <= 0) return;
+      weightedTotal += recycledPct * tonnage;
+      totalTonnage += tonnage;
+    });
+
+    if (totalTonnage <= 0) return null;
+    return weightedTotal / totalTonnage;
+  };
+
   if (livePayload) {
     const unit = (scheme?.distance_unit ?? "km").toLowerCase() === "mi" ? "mi" : "km";
     compareItems.push({
@@ -441,6 +479,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
       bullets: buildBullets(livePayload.products, livePayload.install, unit),
       lifecycle: buildLifecycle(livePayload.results),
       a1Factor: computeA1Factor(livePayload.products),
+      recycledPct: computeRecycledPct(livePayload.products),
     });
   }
 
@@ -469,6 +508,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
       ),
       lifecycle: buildLifecycle(snapshot.scheme_carbon_results ?? []),
       a1Factor: computeA1Factor(snapshot.scheme_products ?? []),
+      recycledPct: computeRecycledPct(snapshot.scheme_products ?? []),
     });
   });
 
@@ -511,6 +551,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
         </header>
         <ScenarioCompareGrid items={compareItems} />
         <ScenarioCompareCharts items={compareItems} />
+        <ScenarioCompareRecycledSection items={compareItems} />
         <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} />
       </main>
     </AuthGate>

@@ -2238,6 +2238,72 @@ h3,
   word-break: break-word;
 }
 
+.compare-recycled-section {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.compare-recycled-chart {
+  margin-top: 0;
+}
+
+.compare-chart-bar.compare-chart-bar-short {
+  height: 280px;
+}
+
+.compare-recycled-panel {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.compare-recycled-image {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.compare-recycled-overlay {
+  position: absolute;
+  inset: auto 24px 24px;
+  justify-self: center;
+  text-align: center;
+  display: grid;
+  gap: 4px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
+.compare-recycled-overlay span {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.compare-recycled-overlay strong {
+  font-size: 1.35rem;
+  color: var(--text-primary);
+}
+
+@media (max-width: 1100px) {
+  .compare-recycled-section {
+    grid-template-columns: 1fr;
+  }
+}
+
 .scheme-scenario-form {
   display: inline-flex;
   align-items: center;

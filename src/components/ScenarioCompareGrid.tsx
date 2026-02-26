@@ -27,6 +27,7 @@ export type CompareItem = {
   bullets: string[];
   lifecycle: LifecycleStage[];
   a1Factor?: number | null;
+  recycledPct?: number | null;
 };
 
 const formatNumber = (value: number | null, digits = 2) => {

@@ -45,8 +45,8 @@ export function ScenarioCompareLauncher({
       setError("Select at least 2 items to compare.");
       return;
     }
-    if (selected.length > 4) {
-      setError("Select up to 4 items.");
+    if (selected.length > 5) {
+      setError("Select up to 5 items.");
       return;
     }
     const ordered = ["live", ...scenarioOptions.map((s) => s.id)].filter((id) =>
@@ -73,7 +73,7 @@ export function ScenarioCompareLauncher({
               </button>
             </div>
             <p className="scheme-muted">
-              Pick 2–4 options to compare. Live scheme is the current working data.
+              Pick 2–5 options to compare. Live scheme is the current working data.
             </p>
             <div className="scheme-modal-list">
               <label className="scheme-modal-option">
