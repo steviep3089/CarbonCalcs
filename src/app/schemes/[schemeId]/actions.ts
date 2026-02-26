@@ -292,6 +292,8 @@ async function applyScenarioSnapshot(
   schemeId: string,
   snapshot: ScenarioSnapshot
 ) {
+  await supabase.from("scheme_carbon_results").delete().eq("scheme_id", schemeId);
+  await supabase.from("scheme_carbon_summaries").delete().eq("scheme_id", schemeId);
   await supabase.from("scheme_a5_usage_entries").delete().eq("scheme_id", schemeId);
   await supabase.from("scheme_installation_items").delete().eq("scheme_id", schemeId);
   await supabase.from("scheme_products").delete().eq("scheme_id", schemeId);
@@ -305,6 +307,10 @@ async function applyScenarioSnapshot(
   const usages = Array.isArray(snapshot?.scheme_a5_usage_entries)
     ? snapshot.scheme_a5_usage_entries
     : [];
+  const carbonResults = Array.isArray(snapshot?.scheme_carbon_results)
+    ? snapshot.scheme_carbon_results
+    : [];
+  const carbonSummary = snapshot?.scheme_carbon_summary ?? null;
 
   if (products.length) {
     const { error } = await supabase.from("scheme_products").insert(
@@ -337,6 +343,42 @@ async function applyScenarioSnapshot(
         scheme_id: schemeId,
       }))
     );
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  const safeCarbonResults = carbonResults.filter(
+    (row) => row.lifecycle_stage && row.total_kgco2e !== null
+  );
+
+  if (safeCarbonResults.length) {
+    const { error } = await supabase.from("scheme_carbon_results").insert(
+      safeCarbonResults.map((row) => ({
+        scheme_id: schemeId,
+        lifecycle_stage: row.lifecycle_stage,
+        total_kgco2e: row.total_kgco2e,
+        kgco2e_per_tonne: row.kgco2e_per_tonne,
+        detail_label: row.detail_label,
+        product_id: row.product_id,
+        mix_type_id: row.mix_type_id,
+      }))
+    );
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  if (
+    carbonSummary &&
+    carbonSummary.total_kgco2e !== null &&
+    carbonSummary.kgco2e_per_tonne !== null
+  ) {
+    const { error } = await supabase.from("scheme_carbon_summaries").insert({
+      scheme_id: schemeId,
+      total_kgco2e: carbonSummary.total_kgco2e,
+      kgco2e_per_tonne: carbonSummary.kgco2e_per_tonne,
+    });
     if (error) {
       throw new Error(error.message);
     }
@@ -2037,14 +2079,6 @@ export async function applySchemeScenario(
     .from("schemes")
     .update({ active_scenario_id: scenario_id })
     .eq("id", schemeId);
-
-  const { error: recalcError } = await supabase.rpc("calculate_scheme_carbon", {
-    p_scheme_id: schemeId,
-  });
-
-  if (recalcError) {
-    return;
-  }
 
   revalidatePath(`/schemes/${schemeId}`);
   return;
