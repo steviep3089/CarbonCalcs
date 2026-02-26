@@ -1258,7 +1258,6 @@ function InstallationTab({
           <span>Spread rate (t/m2)</span>
           <span>kgCO2 / t</span>
           <span>kgCO2 / ltr</span>
-          <span>kgCO2e</span>
           <span>kgCO2e / (km/mi)</span>
           <span>Litres / t</span>
           <span>Default</span>
@@ -1277,7 +1276,7 @@ function InstallationTab({
           <tbody>
             {filtered.map((row) => (
               <tr key={row.id}>
-                <td colSpan={10}>
+                <td colSpan={9}>
                   <form
                     action={actions.updateInstallationSetup}
                     className="admin-row-form admin-install-grid"
@@ -1321,8 +1320,7 @@ function InstallationTab({
                     />
                     <input
                       name="kgco2e"
-                      type="number"
-                      step="0.0001"
+                      type="hidden"
                       defaultValue={row.kgco2e ?? ""}
                     />
                     <div className="admin-inline-field">
@@ -1401,9 +1399,8 @@ function InstallationTab({
           />
           <input
             name="kgco2e"
-            type="number"
-            step="0.0001"
-            placeholder="kgCO2e"
+            type="hidden"
+            value="0"
           />
           <div className="admin-inline-field">
             <input
