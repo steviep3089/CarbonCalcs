@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import { cookies } from "next/headers";
+import { GlobalTopLogo } from "@/components/GlobalTopLogo";
 import "./globals.css";
 
 const bodyFont = Manrope({
@@ -34,6 +35,7 @@ export default async function RootLayout({
     <html lang="en" data-theme={theme} suppressHydrationWarning>
       <body className={`${bodyFont.variable} ${displayFont.variable} antialiased`}>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <GlobalTopLogo />
         {children}
       </body>
     </html>

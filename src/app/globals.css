@@ -172,6 +172,21 @@ h3,
   font-size: clamp(1.2rem, 2.4vw, 1.8rem);
 }
 
+.global-top-logo-wrap {
+  position: fixed;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  pointer-events: none;
+}
+
+.global-top-logo {
+  max-height: 56px;
+  width: auto;
+  display: block;
+}
+
 .login-panel {
   max-width: 520px;
   display: grid;
