@@ -28,6 +28,7 @@
 /Neils Forms/
 supabase-public.dump
 supabase-dump.sql
+docs/co2-calculation-reference.md
 
 # debug
 npm-debug.log*
