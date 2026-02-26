@@ -63,6 +63,7 @@ export default async function AdminPage() {
       mix_type_id,
       product_id,
       kgco2e_per_tonne,
+      recycled_materials_pct,
       is_default,
       valid_from,
       valid_to,

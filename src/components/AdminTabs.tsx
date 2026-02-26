@@ -35,6 +35,7 @@ type PlantMixFactor = {
   mix_type_id: string;
   product_id: string | null;
   kgco2e_per_tonne: number | null;
+  recycled_materials_pct?: number | null;
   is_default?: boolean | null;
   valid_from: string | null;
   valid_to: string | null;
@@ -109,6 +110,7 @@ type ActionResponse = {
     mix_type_id: string;
     product_id: string | null;
     kgco2e_per_tonne: number | null;
+    recycled_materials_pct?: number | null;
     valid_from: string | null;
     valid_to: string | null;
     plants?: { name: string | null } | { name: string | null }[] | null;
@@ -116,6 +118,7 @@ type ActionResponse = {
   }>;
   proposed?: {
     kgco2e_per_tonne: number;
+    recycled_materials_pct?: number | null;
     valid_from: string | null;
     valid_to: string | null;
     mix_type_id: string;
@@ -527,6 +530,17 @@ function ManufacturingTab({
                           />
                         </label>
                         <label>
+                          % of recycled materials used in the mix
+                          <input
+                            name="recycled_materials_pct"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            defaultValue={row.recycled_materials_pct ?? ""}
+                          />
+                        </label>
+                        <label>
                           Valid from
                           <input
                             name="valid_from"
@@ -567,6 +581,9 @@ function ManufacturingTab({
                         </div>
                         <div className="plant-factor-meta">
                           <span>{row.kgco2e_per_tonne ?? "-"} kgCO2e / t</span>
+                          <span>
+                            Recycled: {row.recycled_materials_pct ?? "-"}%
+                          </span>
                           <span>{row.valid_from ?? "-"}</span>
                           {row.is_default ? (
                             <span className="scheme-muted">Default</span>
@@ -793,6 +810,7 @@ function MaterialCreationTab({
   const [productId, setProductId] = useState("");
   const [productName, setProductName] = useState("");
   const [kgco2ePerT, setKgco2ePerT] = useState("");
+  const [recycledMaterialsPct, setRecycledMaterialsPct] = useState("");
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
   const [validToNa, setValidToNa] = useState(false);
@@ -806,6 +824,7 @@ function MaterialCreationTab({
       setProductId("");
       setProductName("");
       setKgco2ePerT("");
+      setRecycledMaterialsPct("");
       setValidFrom("");
       setValidTo("");
       setValidToNa(false);
@@ -853,6 +872,7 @@ function MaterialCreationTab({
     formData.set("product_id", productId);
     formData.set("product_name", productName);
     formData.set("kgco2e_per_tonne", kgco2ePerT);
+    formData.set("recycled_materials_pct", recycledMaterialsPct);
     formData.set("valid_from", validFrom);
     formData.set("valid_to", validTo);
     if (validToNa) {
@@ -992,6 +1012,18 @@ function MaterialCreationTab({
             />
           </label>
           <label>
+            % of recycled materials used in the mix
+            <input
+              name="recycled_materials_pct"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={recycledMaterialsPct}
+              onChange={(event) => setRecycledMaterialsPct(event.target.value)}
+            />
+          </label>
+          <label>
             Valid from
             <input
               name="valid_from"
@@ -1059,6 +1091,7 @@ function MaterialCreationTab({
                 <span>Mix: {displayMixType}</span>
                 <span>Product: {displayProduct}</span>
                 <span>kgCO2e: {kgco2ePerT || "-"}</span>
+                <span>Recycled: {recycledMaterialsPct || "-"}%</span>
                 <span>
                   Dates: {validFrom || "-"} to {validToNa ? "N/A" : validTo || "-"}
                 </span>
@@ -1086,6 +1119,7 @@ function MaterialCreationTab({
                     <span>Mix: {row.mix_type_id || "-"}</span>
                     <span>Product: {getJoinName(row.products) ?? "No product"}</span>
                     <span>kgCO2e: {row.kgco2e_per_tonne ?? "-"}</span>
+                    <span>Recycled: {row.recycled_materials_pct ?? "-"}%</span>
                     <span>
                       Dates: {row.valid_from ?? "-"} to {row.valid_to ?? "N/A"}
                     </span>

@@ -3017,6 +3017,8 @@ h3,
 
 .plant-factor-item.is-editing {
   background: var(--surface);
+  border-color: rgba(124, 215, 255, 0.65);
+  box-shadow: 0 0 0 2px rgba(124, 215, 255, 0.18);
   cursor: default;
 }
 
@@ -3168,7 +3170,7 @@ h3,
 }
 
 .material-grid-tight {
-  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(260px, 1.2fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .valid-to-group {

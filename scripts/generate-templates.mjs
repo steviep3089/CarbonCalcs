@@ -31,13 +31,14 @@ writeTemplate(
     "mix_type",
     "product_name",
     "kgco2e_per_tonne",
+    "recycled_materials_pct",
     "valid_from",
     "valid_to",
     "source",
     "a1_includes_raw_materials",
   ],
-  ["Moorcroft", "HOT", "TSCS", "55", "2026-01-03", "", "manual", "false"],
-  [20, 12, 18, 18, 14, 14, 18, 24]
+  ["Moorcroft", "HOT", "TSCS", "55", "20", "2026-01-03", "", "manual", "false"],
+  [20, 12, 18, 18, 18, 14, 14, 18, 24]
 );
 
 writeTemplate(

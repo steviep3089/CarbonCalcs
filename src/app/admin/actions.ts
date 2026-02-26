@@ -18,6 +18,7 @@ type ActionState = {
     mix_type_id: string;
     product_id: string | null;
     kgco2e_per_tonne: number | null;
+    recycled_materials_pct?: number | null;
     valid_from: string | null;
     valid_to: string | null;
     plants?: { name: string | null } | { name: string | null }[] | null;
@@ -25,6 +26,7 @@ type ActionState = {
   }>;
   proposed?: {
     kgco2e_per_tonne: number;
+    recycled_materials_pct?: number | null;
     valid_from: string | null;
     valid_to: string | null;
     mix_type_id: string;
@@ -168,6 +170,8 @@ export async function createPlantMixFactor(
   const mix_type_id = formData.get("mix_type_id") as string;
   const product_id = formData.get("product_id") as string;
   const kgco2e_per_tonne = Number(formData.get("kgco2e_per_tonne"));
+  const recycledMaterialsRaw = (formData.get("recycled_materials_pct") as string | null)?.trim() ?? "";
+  const recycled_materials_pct = recycledMaterialsRaw ? Number(recycledMaterialsRaw) : null;
   const valid_from = formData.get("valid_from") as string;
   const valid_to = formData.get("valid_to") as string;
   const source = (formData.get("source") as string | null)?.trim();
@@ -176,6 +180,9 @@ export async function createPlantMixFactor(
   if (!plant_id || !mix_type_id || Number.isNaN(kgco2e_per_tonne)) {
     return { error: "Plant, mix type, and kgCO2e are required." };
   }
+  if (recycled_materials_pct !== null && (Number.isNaN(recycled_materials_pct) || recycled_materials_pct < 0 || recycled_materials_pct > 100)) {
+    return { error: "Recycled materials % must be between 0 and 100." };
+  }
 
   const supabase = await requireUser();
   const { error } = await supabase.from("plant_mix_carbon_factors").insert({
@@ -183,6 +190,7 @@ export async function createPlantMixFactor(
     mix_type_id,
     product_id: product_id || null,
     kgco2e_per_tonne,
+    recycled_materials_pct,
     valid_from: valid_from || null,
     valid_to: valid_to || null,
     source: source || null,
@@ -201,11 +209,16 @@ export async function updatePlantMixFactor(formData: FormData): Promise<void> {
   const mix_type_id = formData.get("mix_type_id") as string;
   const product_id = formData.get("product_id") as string;
   const kgco2e_per_tonne = Number(formData.get("kgco2e_per_tonne"));
+  const recycledMaterialsRaw = (formData.get("recycled_materials_pct") as string | null)?.trim() ?? "";
+  const recycled_materials_pct = recycledMaterialsRaw ? Number(recycledMaterialsRaw) : null;
   const valid_from = formData.get("valid_from") as string;
   const valid_to = formData.get("valid_to") as string;
   const source = (formData.get("source") as string | null)?.trim();
 
   if (!id || !plant_id || !mix_type_id || Number.isNaN(kgco2e_per_tonne)) {
+    return;
+  }
+  if (recycled_materials_pct !== null && (Number.isNaN(recycled_materials_pct) || recycled_materials_pct < 0 || recycled_materials_pct > 100)) {
     return;
   }
 
@@ -217,6 +230,7 @@ export async function updatePlantMixFactor(formData: FormData): Promise<void> {
       mix_type_id,
       product_id: product_id || null,
       kgco2e_per_tonne,
+      recycled_materials_pct,
       valid_from: valid_from || null,
       valid_to: valid_to || null,
       source: source || null,
@@ -383,6 +397,8 @@ export async function createMaterialMapping(
   const product_id = (formData.get("product_id") as string | null)?.trim() || null;
   const product_name = (formData.get("product_name") as string | null)?.trim() || null;
   const kgco2e_per_tonne = Number(formData.get("kgco2e_per_tonne"));
+  const recycledMaterialsRaw = (formData.get("recycled_materials_pct") as string | null)?.trim() || "";
+  const recycled_materials_pct = recycledMaterialsRaw ? Number(recycledMaterialsRaw) : null;
   const valid_from = (formData.get("valid_from") as string | null)?.trim() || null;
   const valid_to_raw = (formData.get("valid_to") as string | null)?.trim() || null;
   const valid_to_na = formData.get("valid_to_na") === "on";
@@ -393,6 +409,9 @@ export async function createMaterialMapping(
 
   if (!plantIdsRaw) return { error: "Select at least one plant." };
   if (Number.isNaN(kgco2e_per_tonne)) return { error: "kgCO2e / t is required." };
+  if (recycled_materials_pct !== null && (Number.isNaN(recycled_materials_pct) || recycled_materials_pct < 0 || recycled_materials_pct > 100)) {
+    return { error: "Recycled materials % must be between 0 and 100." };
+  }
   if (!valid_from) return { error: "Valid from is required." };
   if (!valid_to_na && !valid_to_raw) {
     return { error: "Valid to is required unless N/A is checked." };
@@ -467,6 +486,7 @@ export async function createMaterialMapping(
       mix_type_id,
       product_id,
       kgco2e_per_tonne,
+      recycled_materials_pct,
       valid_from,
       valid_to,
       plants ( name ),
@@ -486,6 +506,7 @@ export async function createMaterialMapping(
       matches,
       proposed: {
         kgco2e_per_tonne,
+        recycled_materials_pct,
         valid_from,
         valid_to,
         mix_type_id: resolvedMixTypeId,
@@ -509,6 +530,7 @@ export async function createMaterialMapping(
       .from("plant_mix_carbon_factors")
       .update({
         kgco2e_per_tonne,
+        recycled_materials_pct,
         valid_from,
         valid_to,
         a1_includes_raw_materials,
@@ -526,6 +548,7 @@ export async function createMaterialMapping(
     mix_type_id: resolvedMixTypeId,
     product_id: resolvedProductId,
     kgco2e_per_tonne,
+    recycled_materials_pct,
     valid_from,
     valid_to,
     a1_includes_raw_materials,
@@ -1058,6 +1081,20 @@ export async function uploadMaterialMappings(
       return { error: "Missing kgco2e_per_tonne in CSV." };
     }
 
+    const recycledPctRaw =
+      row.recycled_materials_pct?.trim() ||
+      row.recycled_materials_percent?.trim() ||
+      row.recycled_percentage?.trim() ||
+      row.percent_recycled_materials?.trim() ||
+      "";
+    const recycled_materials_pct = recycledPctRaw ? Number(recycledPctRaw) : null;
+    if (
+      recycled_materials_pct !== null &&
+      (Number.isNaN(recycled_materials_pct) || recycled_materials_pct < 0 || recycled_materials_pct > 100)
+    ) {
+      return { error: "Invalid recycled_materials_pct in CSV. Expected a number between 0 and 100." };
+    }
+
     const valid_from = row.valid_from?.trim() || null;
     if (!valid_from) return { error: "Missing valid_from in CSV." };
 
@@ -1078,6 +1115,7 @@ export async function uploadMaterialMappings(
       mix_type_id: resolvedMixId,
       product_id: resolvedProductId,
       kgco2e_per_tonne,
+      recycled_materials_pct,
       valid_from,
       valid_to,
       source,
