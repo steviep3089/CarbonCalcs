@@ -173,7 +173,7 @@ h3,
 }
 
 .global-top-logo-wrap {
-  position: fixed;
+  position: absolute;
   top: 6px;
   left: 50%;
   transform: translateX(-50%);
