@@ -1905,6 +1905,43 @@ h3,
   align-items: flex-start;
 }
 
+.compare-report-runner {
+  position: relative;
+}
+
+.compare-report-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, 86vw);
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-strong);
+  display: grid;
+  gap: 10px;
+  z-index: 30;
+}
+
+.compare-report-options {
+  display: grid;
+  gap: 8px;
+}
+
+.compare-report-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.compare-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .compare-card-header h2 {
   margin: 6px 0 0;
   font-size: 1.4rem;
@@ -1990,6 +2027,22 @@ h3,
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
   display: grid;
   gap: 16px;
+}
+
+.compare-co2-image-card {
+  margin-top: 20px;
+  padding: 18px 20px 22px;
+  border-radius: 18px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.compare-co2-image {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+  margin-top: 12px;
 }
 
 .compare-map-header {
@@ -2215,6 +2268,29 @@ h3,
 @media (max-width: 1100px) {
   .compare-charts {
     grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .compare-report-runner,
+  .compare-header-actions,
+  .global-top-logo-wrap {
+    display: none !important;
+  }
+
+  .compare-report-mode {
+    padding: 20px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .compare-report-mode .scheme-card,
+  .compare-report-mode .compare-chart,
+  .compare-report-mode .compare-map-card,
+  .compare-report-mode .compare-co2-image-card,
+  .compare-report-mode .compare-recycled-panel {
+    break-inside: avoid;
+    box-shadow: none;
   }
 }
 

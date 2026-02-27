@@ -4,10 +4,11 @@ import { ScenarioCompareGrid, type CompareItem } from "@/components/ScenarioComp
 import { ScenarioCompareCharts } from "@/components/ScenarioCompareCharts";
 import { ScenarioCompareMap } from "@/components/ScenarioCompareMap";
 import { ScenarioCompareRecycledSection } from "@/components/ScenarioCompareRecycledSection";
+import { CompareReportRunner } from "@/components/CompareReportRunner";
 
 type PageProps = {
   params: Promise<{ schemeId: string }>;
-  searchParams?: Promise<{ items?: string }>;
+  searchParams?: Promise<{ items?: string; report?: string; sections?: string; autoprint?: string }>;
 };
 
 type Snapshot = {
@@ -54,11 +55,19 @@ type PlantMixFactor = {
 
 export default async function ComparePage({ params, searchParams }: PageProps) {
   const { schemeId } = await params;
-  const { items } = (await searchParams) ?? {};
+  const { items, report, sections, autoprint } = (await searchParams) ?? {};
   const selected = (items ?? "")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+
+  const reportMode = report === "1";
+  const selectedSections = new Set(
+    (sections ?? "cards,graphs,recycled,map,co2")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  );
 
   const supabase = await createSupabaseServerClient();
   const { data: scheme } = await supabase
@@ -534,13 +543,16 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
 
   return (
     <AuthGate>
-      <main className="scheme-detail-page compare-page">
+      <main className={`scheme-detail-page compare-page ${reportMode ? "compare-report-mode" : ""}`}>
         <header className="scheme-detail-header">
           <div>
             <p className="scheme-kicker">Scenario comparison</p>
             <h1>{scheme?.name ?? "Scheme comparison"}</h1>
           </div>
           <div className="compare-header-actions">
+            {!reportMode ? (
+              <CompareReportRunner schemeId={schemeId} selectedItems={selected} />
+            ) : null}
             <a className="btn-secondary" href={savingsHref}>
               CO2 savings
             </a>
@@ -549,10 +561,28 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
             </a>
           </div>
         </header>
-        <ScenarioCompareGrid items={compareItems} />
-        <ScenarioCompareCharts items={compareItems} />
-        <ScenarioCompareRecycledSection items={compareItems} />
-        <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} />
+        {selectedSections.has("cards") ? <ScenarioCompareGrid items={compareItems} /> : null}
+        {selectedSections.has("graphs") ? <ScenarioCompareCharts items={compareItems} /> : null}
+        {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
+        {selectedSections.has("map") ? <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} /> : null}
+        {selectedSections.has("co2") ? (
+          <section className="compare-co2-image-card">
+            <header className="compare-chart-header">
+              <div>
+                <p className="scheme-kicker">Visualisation</p>
+                <h3>CO2 savings view</h3>
+              </div>
+            </header>
+            <img src="/co2-image.png" alt="CO2 savings visual" className="compare-co2-image" />
+          </section>
+        ) : null}
+        {reportMode && autoprint === "1" ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: "window.addEventListener('load',function(){setTimeout(function(){window.print();},300);});",
+            }}
+          />
+        ) : null}
       </main>
     </AuthGate>
   );
