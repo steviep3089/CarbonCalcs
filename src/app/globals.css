@@ -1924,20 +1924,122 @@ h3,
 }
 
 .compare-report-options {
-  display: grid;
-  gap: 8px;
-}
-
-.compare-report-option {
-  display: inline-flex;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  background: #d1d5db;
+  color: #000000;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
-  color: var(--text-primary);
+.compare-report-pages {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
 }
 
-.compare-report-actions {
-  display: flex;
+.compare-report-page {
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #d4d4d8;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.16);
+  padding: 12mm;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  overflow: hidden;
+}
+
+.compare-report-header h1,
+.compare-report-header h2 {
+  margin: 4px 0 0;
+  color: #0f172a;
+}
+
+.compare-report-mode .scheme-kicker,
+.compare-report-mode .scheme-muted,
+.compare-report-mode .compare-chart-label,
+.compare-report-mode .compare-chart-bar-value,
+.compare-report-mode .compare-card-totals span,
+.compare-report-mode .compare-narrative,
+.compare-report-mode .compare-bullets,
+.compare-report-mode .compare-map-meta,
+.compare-report-mode .lifecycle-desc {
+  color: #334155 !important;
+}
+
+.compare-report-mode .compare-chart-header h3,
+.compare-report-mode .compare-card-header h2,
+.compare-report-mode .compare-card-totals strong,
+.compare-report-mode .lifecycle-right,
+.compare-report-mode .compare-recycled-overlay strong {
+  color: #0f172a !important;
+}
+
+.compare-report-mode .compare-chart,
+.compare-report-mode .compare-map-card,
+.compare-report-mode .compare-co2-image-card,
+.compare-report-mode .compare-recycled-panel,
+.compare-report-mode .scheme-card {
+  box-shadow: none;
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.compare-report-mode .compare-charts {
+  gap: 10px;
+}
+
+.compare-report-mode .compare-chart {
+  padding: 10px 12px 12px;
+}
+
+.compare-report-mode .compare-chart-bars {
+  min-height: 92px;
+}
+
+.compare-report-mode .compare-chart-bar {
+  height: 120px;
+}
+
+.compare-report-mode .compare-chart-bar.compare-chart-bar-short {
+  height: 110px;
+}
+
+.compare-report-mode .compare-chart-bar-fill {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.compare-report-mode .compare-recycled-section {
+  gap: 10px;
+}
+
+.compare-report-mode .compare-recycled-image {
+  max-height: 210px;
+  width: auto;
+  max-width: 100%;
+}
+
+.compare-report-mode .compare-recycled-overlay {
+  inset: auto 14px 14px;
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.compare-report-mode .compare-recycled-overlay span,
+.compare-report-mode .compare-recycled-overlay strong {
+  color: #ffffff !important;
+}
+
+.compare-report-mode .compare-map-wrap {
+  min-height: 250px;
+}
+
+.compare-report-mode .compare-co2-image {
+  max-height: 250px;
+  object-fit: contain;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -2284,9 +2386,24 @@ h3,
   }
 
   .compare-report-mode {
-    padding: 20px !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
+  }
+
+  .compare-report-page {
+    box-shadow: none !important;
+    border: none !important;
+    width: auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .compare-report-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
   }
 
   .compare-report-mode .scheme-card,

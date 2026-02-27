@@ -544,42 +544,84 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   return (
     <AuthGate>
       <main className={`scheme-detail-page compare-page ${reportMode ? "compare-report-mode" : ""}`}>
-        <header className="scheme-detail-header">
-          <div>
-            <p className="scheme-kicker">Scenario comparison</p>
-            <h1>{scheme?.name ?? "Scheme comparison"}</h1>
-          </div>
-          <div className="compare-header-actions">
-            {!reportMode ? (
-              <CompareReportRunner schemeId={schemeId} selectedItems={selected} />
-            ) : null}
-            {!reportMode ? (
-              <>
+        {!reportMode ? (
+          <>
+            <header className="scheme-detail-header">
+              <div>
+                <p className="scheme-kicker">Scenario comparison</p>
+                <h1>{scheme?.name ?? "Scheme comparison"}</h1>
+              </div>
+              <div className="compare-header-actions">
+                <CompareReportRunner schemeId={schemeId} selectedItems={selected} />
                 <a className="btn-secondary" href={savingsHref}>
                   CO2 savings
                 </a>
                 <a className="btn-secondary" href={`/schemes/${schemeId}`}>
                   Back to scheme
                 </a>
-              </>
-            ) : null}
-          </div>
-        </header>
-        {selectedSections.has("cards") ? <ScenarioCompareGrid items={compareItems} /> : null}
-        {selectedSections.has("graphs") ? <ScenarioCompareCharts items={compareItems} /> : null}
-        {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
-        {selectedSections.has("map") ? <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} /> : null}
-        {selectedSections.has("co2") ? (
-          <section className="compare-co2-image-card">
-            <header className="compare-chart-header">
-              <div>
-                <p className="scheme-kicker">Visualisation</p>
-                <h3>CO2 savings view</h3>
               </div>
             </header>
-            <img src="/co2-image.png" alt="CO2 savings visual" className="compare-co2-image" />
-          </section>
-        ) : null}
+            {selectedSections.has("cards") ? <ScenarioCompareGrid items={compareItems} /> : null}
+            {selectedSections.has("graphs") ? <ScenarioCompareCharts items={compareItems} /> : null}
+            {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
+            {selectedSections.has("map") ? <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} /> : null}
+            {selectedSections.has("co2") ? (
+              <section className="compare-co2-image-card">
+                <header className="compare-chart-header">
+                  <div>
+                    <p className="scheme-kicker">Visualisation</p>
+                    <h3>CO2 savings view</h3>
+                  </div>
+                </header>
+                <img src="/co2-image.png" alt="CO2 savings visual" className="compare-co2-image" />
+              </section>
+            ) : null}
+          </>
+        ) : (
+          <div className="compare-report-pages">
+            <section className="compare-report-page">
+              <header className="compare-report-header">
+                <p className="scheme-kicker">Scenario comparison</p>
+                <h1>{scheme?.name ?? "Scheme comparison"}</h1>
+              </header>
+              {selectedSections.has("graphs") ? <ScenarioCompareCharts items={compareItems} /> : null}
+              {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
+            </section>
+
+            {selectedSections.has("cards") ? (
+              <section className="compare-report-page">
+                <header className="compare-report-header">
+                  <p className="scheme-kicker">Scenario comparison</p>
+                  <h2>Comparison cards</h2>
+                </header>
+                <ScenarioCompareGrid items={compareItems} />
+              </section>
+            ) : null}
+
+            {selectedSections.has("map") ? (
+              <section className="compare-report-page">
+                <header className="compare-report-header">
+                  <p className="scheme-kicker">Visualisation</p>
+                  <h2>Lifecycle map</h2>
+                </header>
+                <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} />
+              </section>
+            ) : null}
+
+            {selectedSections.has("co2") ? (
+              <section className="compare-report-page">
+                <header className="compare-report-header">
+                  <p className="scheme-kicker">Visualisation</p>
+                  <h2>CO2 savings view</h2>
+                </header>
+                <section className="compare-co2-image-card">
+                  <img src="/co2-image.png" alt="CO2 savings visual" className="compare-co2-image" />
+                </section>
+              </section>
+            ) : null}
+          </div>
+        )}
+
         {reportMode && autoprint === "1" ? (
           <script
             dangerouslySetInnerHTML={{
