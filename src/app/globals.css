@@ -2272,6 +2272,11 @@ h3,
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
   .compare-report-runner,
   .compare-header-actions,
   .global-top-logo-wrap {
@@ -2292,6 +2297,23 @@ h3,
     break-inside: avoid;
     box-shadow: none;
   }
+}
+
+.compare-report-mode {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 12mm;
+  background: #ffffff;
+  color: #000000;
+}
+
+.compare-report-mode .scheme-card,
+.compare-report-mode .compare-chart,
+.compare-report-mode .compare-map-card,
+.compare-report-mode .compare-co2-image-card,
+.compare-report-mode .compare-recycled-panel {
+  box-shadow: none;
 }
 
 .compare-chart-bar-fill {

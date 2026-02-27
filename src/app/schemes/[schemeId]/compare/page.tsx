@@ -553,12 +553,16 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
             {!reportMode ? (
               <CompareReportRunner schemeId={schemeId} selectedItems={selected} />
             ) : null}
-            <a className="btn-secondary" href={savingsHref}>
-              CO2 savings
-            </a>
-            <a className="btn-secondary" href={`/schemes/${schemeId}`}>
-              Back to scheme
-            </a>
+            {!reportMode ? (
+              <>
+                <a className="btn-secondary" href={savingsHref}>
+                  CO2 savings
+                </a>
+                <a className="btn-secondary" href={`/schemes/${schemeId}`}>
+                  Back to scheme
+                </a>
+              </>
+            ) : null}
           </div>
         </header>
         {selectedSections.has("cards") ? <ScenarioCompareGrid items={compareItems} /> : null}
