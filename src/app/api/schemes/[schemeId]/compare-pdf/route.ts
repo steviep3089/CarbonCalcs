@@ -1073,30 +1073,6 @@ const drawMapPage = (
 
   page.drawImage(mapImage, mapRect);
 
-  // The source PNG includes a faint dark edge; mask it inside the drawn bounds for PDF output.
-  const edgeMask = 2.5;
-  page.drawRectangle({
-    x: mapRect.x,
-    y: mapRect.y + mapRect.height - edgeMask,
-    width: mapRect.width,
-    height: edgeMask,
-    color: palette.white,
-  });
-  page.drawRectangle({
-    x: mapRect.x,
-    y: mapRect.y,
-    width: mapRect.width,
-    height: edgeMask,
-    color: palette.white,
-  });
-  page.drawRectangle({
-    x: mapRect.x + mapRect.width - edgeMask,
-    y: mapRect.y,
-    width: edgeMask,
-    height: mapRect.height,
-    color: palette.white,
-  });
-
   const layoutMap = getMapLayout(layouts);
   mapMarkers.forEach((marker) => {
     const layout = layoutMap.get(marker.key) ?? mapLayoutDefaults[marker.key];
@@ -1829,7 +1805,7 @@ export async function generateComparePdfExport(
   const [logoBytes, recycleBytes, mapBytes, co2Bytes] = await Promise.all([
     readPublicAsset("branding/holcim.png"),
     readPublicAsset("branding/recycle.png"),
-    readPublicAsset("neils-map.png"),
+    readPublicAsset("neils-map-ppt.png"),
     readPublicAsset("co2-image.png"),
   ]);
 
