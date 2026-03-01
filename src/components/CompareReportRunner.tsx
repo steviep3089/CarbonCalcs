@@ -1,5 +1,7 @@
 "use client";
 
+import { CompareReportDriveButton } from "@/components/CompareReportDriveButton";
+import { CompareReportEmailButton } from "@/components/CompareReportEmailButton";
 import { useMemo, useState } from "react";
 
 type SectionOption = {
@@ -10,7 +12,10 @@ type SectionOption = {
 
 const sectionOptions: SectionOption[] = [
   { key: "cards", label: "Comparison cards", defaultChecked: true },
-  { key: "graphs", label: "Existing graphs", defaultChecked: true },
+  { key: "graph-a1a3", label: "Graph: A1-A3", defaultChecked: true },
+  { key: "graph-a4", label: "Graph: A4", defaultChecked: true },
+  { key: "graph-a5", label: "Graph: A5", defaultChecked: true },
+  { key: "graph-a1a5", label: "Graph: A1-A5", defaultChecked: true },
   { key: "recycled", label: "Recycled chart + sign", defaultChecked: true },
   { key: "map", label: "Lifecycle map", defaultChecked: true },
   { key: "co2", label: "CO2 savings image", defaultChecked: true },
@@ -18,10 +23,16 @@ const sectionOptions: SectionOption[] = [
 
 export function CompareReportRunner({
   schemeId,
+  schemeName,
   selectedItems,
+  defaultReportEmail,
+  defaultGoogleDriveFolder,
 }: {
   schemeId: string;
+  schemeName?: string;
   selectedItems: string[];
+  defaultReportEmail?: string;
+  defaultGoogleDriveFolder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState<string[]>(
@@ -30,14 +41,30 @@ export function CompareReportRunner({
 
   const sectionParam = useMemo(() => checked.join(","), [checked]);
   const itemsParam = useMemo(() => selectedItems.join(","), [selectedItems]);
+  const defaultSections =
+    "cards,graph-a1a3,graph-a4,graph-a5,graph-a1a5,recycled,map,co2";
 
   const buildReportHref = (autoPrint = false) => {
     const params = new URLSearchParams();
     if (itemsParam) params.set("items", itemsParam);
     params.set("report", "1");
-    params.set("sections", sectionParam || "cards,graphs,recycled,map,co2");
+    params.set("sections", sectionParam || defaultSections);
     if (autoPrint) params.set("autoprint", "1");
     return `/schemes/${schemeId}/compare?${params.toString()}`;
+  };
+
+  const buildPdfHref = () => {
+    const params = new URLSearchParams();
+    if (itemsParam) params.set("items", itemsParam);
+    params.set("sections", sectionParam || defaultSections);
+    return `/api/schemes/${schemeId}/compare-pdf?${params.toString()}`;
+  };
+
+  const buildPptHref = () => {
+    const params = new URLSearchParams();
+    if (itemsParam) params.set("items", itemsParam);
+    params.set("sections", sectionParam || defaultSections);
+    return `/api/schemes/${schemeId}/compare-pptx?${params.toString()}`;
   };
 
   const toggle = (key: string) => {
@@ -72,15 +99,26 @@ export function CompareReportRunner({
             <a className="btn-secondary" href={buildReportHref(false)} target="_blank" rel="noreferrer">
               Preview
             </a>
-            <a className="btn-primary" href={buildReportHref(true)} target="_blank" rel="noreferrer">
+            <a className="btn-primary" href={buildPdfHref()} target="_blank" rel="noreferrer">
               Download PDF
             </a>
-            <button className="btn-secondary" type="button" disabled title="Coming next phase">
+            <a className="btn-secondary" href={buildPptHref()} target="_blank" rel="noreferrer">
               Download PPT
-            </button>
-            <button className="btn-secondary" type="button" disabled title="Coming next phase">
-              Email report
-            </button>
+            </a>
+            <CompareReportDriveButton
+              schemeId={schemeId}
+              schemeName={schemeName}
+              selectedItems={selectedItems}
+              selectedSections={checked}
+              defaultFolder={defaultGoogleDriveFolder}
+            />
+            <CompareReportEmailButton
+              schemeId={schemeId}
+              schemeName={schemeName}
+              selectedItems={selectedItems}
+              selectedSections={checked}
+              defaultRecipients={defaultReportEmail}
+            />
           </div>
         </div>
       ) : null}

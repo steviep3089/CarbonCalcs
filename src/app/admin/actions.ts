@@ -34,7 +34,23 @@ type ActionState = {
   };
 };
 
-async function requireUser() {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const USER_REPORT_PREFERENCES_MISSING_MESSAGE =
+  "Report defaults are not enabled yet. Run scripts/sql/2026-02-28-add-user-report-preferences.sql in Supabase SQL Editor, then try again.";
+
+function isMissingUserReportPreferencesTable(error: { message?: string | null; code?: string | null } | null) {
+  if (!error) return false;
+  const message = `${error.code ?? ""} ${error.message ?? ""}`.toLowerCase();
+  return (
+    message.includes("user_report_preferences") &&
+    (message.includes("schema cache") ||
+      message.includes("does not exist") ||
+      message.includes("relation") ||
+      message.includes("pgrst"))
+  );
+}
+
+async function requireUserContext() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -45,6 +61,11 @@ async function requireUser() {
     throw new Error("Unauthorized");
   }
 
+  return { supabase, user };
+}
+
+async function requireUser() {
+  const { supabase } = await requireUserContext();
   return supabase;
 }
 
@@ -97,6 +118,41 @@ export async function inviteUser(
   }
 
   return { success: true, message: "Invitation sent." };
+}
+
+export async function saveUserReportPreferences(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await requireUserContext();
+
+  const defaultReportEmail = (formData.get("default_report_email") as string | null)?.trim() ?? "";
+  const googleDriveFolder = (formData.get("google_drive_folder") as string | null)?.trim() ?? "";
+
+  if (defaultReportEmail && !EMAIL_RE.test(defaultReportEmail)) {
+    return { error: "Default report email must be a valid email address." };
+  }
+
+  const { error } = await supabase.from("user_report_preferences").upsert(
+    {
+      user_id: user.id,
+      default_report_email: defaultReportEmail || null,
+      google_drive_folder: googleDriveFolder || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (error) {
+    if (isMissingUserReportPreferencesTable(error)) {
+      return { error: USER_REPORT_PREFERENCES_MISSING_MESSAGE };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/schemes");
+  return { success: true, message: "Report defaults saved." };
 }
 
 export async function createPlant(
@@ -697,7 +753,7 @@ export async function updateInstallationSetupsBulk(
   let rows: Array<Record<string, unknown>> = [];
   try {
     rows = JSON.parse(payload) as Array<Record<string, unknown>>;
-  } catch (error) {
+  } catch {
     return { error: "Invalid payload format." };
   }
 

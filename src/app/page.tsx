@@ -146,6 +146,8 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      <p className="login-credit">Created by Steve Pointon</p>
     </main>
   );
 }

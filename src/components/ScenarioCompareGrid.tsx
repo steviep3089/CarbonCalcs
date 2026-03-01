@@ -63,9 +63,9 @@ export function ScenarioCompareGrid({ items }: { items: CompareItem[] }) {
         {items.map((item) => (
           <section key={item.id} className="scheme-card compare-card">
             <div className="compare-card-header">
-              <div>
+              <div className="compare-card-heading">
                 <p className="scheme-kicker">{item.subtitle}</p>
-                <h2>{item.title}</h2>
+                <h2 className="compare-card-title">{item.title}</h2>
               </div>
               <div className="compare-card-totals">
                 <div>

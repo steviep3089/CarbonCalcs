@@ -99,6 +99,11 @@ type GhgFactorFilter = {
   is_active: boolean;
 };
 
+type UserReportPreferences = {
+  default_report_email: string | null;
+  google_drive_folder: string | null;
+} | null;
+
 type ActionResponse = {
   error?: string;
   success?: boolean;
@@ -147,6 +152,7 @@ type Actions = {
   createMaterialMapping: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   uploadMaterialMappings: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   inviteUser: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
+  saveUserReportPreferences: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   createReportMetric: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   updateReportMetric: (formData: FormData) => Promise<void>;
   deleteReportMetric: (formData: FormData) => Promise<void>;
@@ -170,6 +176,7 @@ type AdminTabsProps = {
   reportMetrics: ReportMetric[];
   ghgCategories: GhgCategory[];
   ghgFilters: GhgFactorFilter[];
+  userReportPreferences: UserReportPreferences;
   actions: Actions;
 };
 
@@ -189,6 +196,7 @@ export function AdminTabs({
   reportMetrics,
   ghgCategories,
   ghgFilters,
+  userReportPreferences,
   actions,
 }: AdminTabsProps) {
   const [active, setActive] = useState("plants");
@@ -255,9 +263,14 @@ export function AdminTabs({
       },
       {
         id: "users",
-        label: "User access",
-        content: <UserAccessTab actions={actions} />,
-      },
+          label: "User access",
+          content: (
+            <UserAccessTab
+              actions={actions}
+              userReportPreferences={userReportPreferences}
+            />
+          ),
+        },
   ];
 
   useEffect(() => {
@@ -2308,33 +2321,94 @@ function ReportsTab({
   );
 }
 
-function UserAccessTab({ actions }: { actions: Actions }) {
+function UserAccessTab({
+  actions,
+  userReportPreferences,
+}: {
+  actions: Actions;
+  userReportPreferences: UserReportPreferences;
+}) {
   const [inviteState, inviteAction] = useActionState(actions.inviteUser, {});
+  const [preferencesState, preferencesAction] = useActionState(
+    actions.saveUserReportPreferences,
+    {}
+  );
 
   return (
-    <section className="scheme-card">
-      <div className="scheme-card-header">
-        <h2>User access</h2>
-        <p className="scheme-card-subtitle">
-          Invite new users by email. They will receive a link to set a password.
-        </p>
-      </div>
-      <form action={inviteAction} className="admin-create">
-        <div className="admin-form-row">
-          <input name="email" type="email" placeholder="user@company.com" />
-          <button className="btn-primary" type="submit">
-            Send invite
-          </button>
-        </div>
-        {inviteState?.error ? (
-          <p className="create-scheme-message error">{inviteState.error}</p>
-        ) : null}
-        {inviteState?.success ? (
-          <p className="create-scheme-message success">
-            {inviteState.message ?? "Invitation sent."}
+    <div className="admin-grid">
+      <section className="scheme-card">
+        <div className="scheme-card-header">
+          <h2>User access</h2>
+          <p className="scheme-card-subtitle">
+            Invite new users by email. They will receive a link to set a password.
           </p>
-        ) : null}
-      </form>
-    </section>
+        </div>
+        <form action={inviteAction} className="admin-create">
+          <div className="admin-form-row">
+            <input name="email" type="email" placeholder="user@company.com" />
+            <button className="btn-primary" type="submit">
+              Send invite
+            </button>
+          </div>
+          {inviteState?.error ? (
+            <p className="create-scheme-message error">{inviteState.error}</p>
+          ) : null}
+          {inviteState?.success ? (
+            <p className="create-scheme-message success">
+              {inviteState.message ?? "Invitation sent."}
+            </p>
+          ) : null}
+        </form>
+      </section>
+
+      <section className="scheme-card">
+        <div className="scheme-card-header">
+          <h2>Report defaults</h2>
+          <p className="scheme-card-subtitle">
+            Set the default recipient and Google Drive folder used by report actions.
+          </p>
+        </div>
+        <form action={preferencesAction} className="admin-create">
+          <div className="material-grid material-grid-tight">
+            <label>
+              Default report email
+              <input
+                name="default_report_email"
+                type="email"
+                placeholder="reports@company.com"
+                defaultValue={userReportPreferences?.default_report_email ?? ""}
+              />
+            </label>
+            <label>
+              Google Drive folder URL or ID
+              <input
+                name="google_drive_folder"
+                type="text"
+                placeholder="https://drive.google.com/drive/folders/..."
+                defaultValue={userReportPreferences?.google_drive_folder ?? ""}
+              />
+            </label>
+          </div>
+          <p className="scheme-card-subtitle">
+            Paste the Google Drive folder URL or folder ID. The app will save into a
+            folder the configured Google OAuth account can access.
+          </p>
+          {preferencesState?.error ? (
+            <p className="create-scheme-message error">{preferencesState.error}</p>
+          ) : null}
+          {preferencesState?.success ? (
+            <p className="create-scheme-message success">
+              {preferencesState.message ?? "Report defaults saved."}
+            </p>
+          ) : null}
+          <div className="admin-form-row">
+            <span />
+            <button className="btn-primary" type="submit">
+              Save defaults
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   );
 }

@@ -45,7 +45,6 @@ export function ScenarioCompareRecycledSection({ items }: { items: CompareItem[]
       <div className="compare-chart compare-recycled-chart">
         <header className="compare-chart-header">
           <div>
-            <p className="scheme-kicker">Visualisation</p>
             <h3>Recycled material content (%)</h3>
           </div>
         </header>

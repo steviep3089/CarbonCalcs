@@ -1,10 +1,16 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { AuthGate } from "@/components/AuthGate";
 import { ScenarioCompareGrid, type CompareItem } from "@/components/ScenarioCompareGrid";
-import { ScenarioCompareCharts } from "@/components/ScenarioCompareCharts";
+import {
+  ScenarioCompareCharts,
+  ScenarioCompareStageChart,
+  type CompareChartStage,
+} from "@/components/ScenarioCompareCharts";
 import { ScenarioCompareMap } from "@/components/ScenarioCompareMap";
 import { ScenarioCompareRecycledSection } from "@/components/ScenarioCompareRecycledSection";
 import { CompareReportRunner } from "@/components/CompareReportRunner";
+import { CompareReportPreviewActions } from "@/components/CompareReportPreviewActions";
+import { ScenarioCompareCO2Equivalency } from "@/components/ScenarioCompareCO2Equivalency";
 
 type PageProps = {
   params: Promise<{ schemeId: string }>;
@@ -53,6 +59,28 @@ type PlantMixFactor = {
   is_default?: boolean | null;
 };
 
+type ReportMetric = {
+  id: string;
+  label: string;
+  unit: string | null;
+  value: number | null;
+  calc_op?: string | null;
+  calc_factor?: number | null;
+  source: string | null;
+};
+
+type ReportLayout = {
+  key: string;
+  x: number | null;
+  y: number | null;
+  scale: number | null;
+};
+
+type UserReportPreferences = {
+  default_report_email: string | null;
+  google_drive_folder: string | null;
+};
+
 export default async function ComparePage({ params, searchParams }: PageProps) {
   const { schemeId } = await params;
   const { items, report, sections, autoprint } = (await searchParams) ?? {};
@@ -60,21 +88,50 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
-
   const reportMode = report === "1";
   const selectedSections = new Set(
-    (sections ?? "cards,graphs,recycled,map,co2")
+    (sections ?? "cards,graph-a1a3,graph-a4,graph-a5,graph-a1a5,recycled,map,co2")
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean)
   );
+  const selectedGraphSections: CompareChartStage[] = [
+    { key: "graph-a1a3", stage: "A1-A3" as const },
+    { key: "graph-a4", stage: "A4" as const },
+    { key: "graph-a5", stage: "A5" as const },
+    { key: "graph-a1a5", stage: "A1-A5" as const },
+  ]
+    .filter((entry) => selectedSections.has(entry.key))
+    .map((entry) => entry.stage);
+  const hasOverviewPage = selectedGraphSections.length > 0 || selectedSections.has("recycled");
+  const hasCardsPage = selectedSections.has("cards");
+  const hasMapPage = selectedSections.has("map");
+  const hasCo2Page = selectedSections.has("co2");
+  const reportPageOrder: string[] = [];
+  if (hasOverviewPage) reportPageOrder.push("overview");
+  if (hasCardsPage) reportPageOrder.push("cards");
+  if (hasMapPage) reportPageOrder.push("map");
+  if (hasCo2Page) reportPageOrder.push("co2");
+  const lastReportPage = reportPageOrder.at(-1) ?? null;
+  const disclaimerText =
+    "It is the sole responsibility of the certificate holder to ensure the validity and current status of all information herein";
 
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data: scheme } = await supabase
     .from("schemes")
     .select("id, name, distance_unit, plant_id")
     .eq("id", schemeId)
     .single();
+  const { data: userReportPreferences } = user
+    ? await supabase
+        .from("user_report_preferences")
+        .select("default_report_email, google_drive_folder")
+        .eq("user_id", user.id)
+        .maybeSingle<UserReportPreferences>()
+    : { data: null as UserReportPreferences | null };
 
   const { data: mixTypes } = await supabase
     .from("mix_types")
@@ -100,6 +157,22 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     .from("report_equivalency_layouts")
     .select("key, x, y, scale")
     .ilike("key", "compare-map-%");
+
+  const shouldLoadCo2 = reportMode && selectedSections.has("co2");
+  const { data: co2Layouts } = shouldLoadCo2
+    ? await supabase
+        .from("report_equivalency_layouts")
+        .select("key, x, y, scale")
+    : { data: [] as ReportLayout[] };
+
+  const { data: co2Equivalencies } = shouldLoadCo2
+    ? await supabase
+        .from("report_metrics")
+        .select("id, label, unit, value, source, calc_op, calc_factor")
+        .eq("kind", "equivalency")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+    : { data: [] as ReportMetric[] };
 
   const scenarioById = new Map(
     (scenarioRows ?? []).map((row) => [row.id, row])
@@ -548,11 +621,17 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
           <>
             <header className="scheme-detail-header">
               <div>
-                <p className="scheme-kicker">Scenario comparison</p>
+                <p className="scheme-kicker">Carbon Comparison</p>
                 <h1>{scheme?.name ?? "Scheme comparison"}</h1>
               </div>
               <div className="compare-header-actions">
-                <CompareReportRunner schemeId={schemeId} selectedItems={selected} />
+                <CompareReportRunner
+                  schemeId={schemeId}
+                  schemeName={scheme?.name ?? "Scheme comparison"}
+                  selectedItems={selected}
+                  defaultReportEmail={userReportPreferences?.default_report_email ?? ""}
+                  defaultGoogleDriveFolder={userReportPreferences?.google_drive_folder ?? ""}
+                />
                 <a className="btn-secondary" href={savingsHref}>
                   CO2 savings
                 </a>
@@ -561,65 +640,88 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
                 </a>
               </div>
             </header>
-            {selectedSections.has("cards") ? <ScenarioCompareGrid items={compareItems} /> : null}
-            {selectedSections.has("graphs") ? <ScenarioCompareCharts items={compareItems} /> : null}
-            {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
-            {selectedSections.has("map") ? <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} /> : null}
-            {selectedSections.has("co2") ? (
-              <section className="compare-co2-image-card">
-                <header className="compare-chart-header">
-                  <div>
-                    <p className="scheme-kicker">Visualisation</p>
-                    <h3>CO2 savings view</h3>
-                  </div>
-                </header>
-                <img src="/co2-image.png" alt="CO2 savings visual" className="compare-co2-image" />
-              </section>
-            ) : null}
+            <ScenarioCompareGrid items={compareItems} />
+            <ScenarioCompareCharts items={compareItems} />
+            <ScenarioCompareRecycledSection items={compareItems} />
+            <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} />
           </>
         ) : (
-          <div className="compare-report-pages">
-            <section className="compare-report-page">
-              <header className="compare-report-header">
-                <p className="scheme-kicker">Scenario comparison</p>
-                <h1>{scheme?.name ?? "Scheme comparison"}</h1>
-              </header>
-              {selectedSections.has("graphs") ? <ScenarioCompareCharts items={compareItems} /> : null}
-              {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
-            </section>
-
-            {selectedSections.has("cards") ? (
-              <section className="compare-report-page">
-                <header className="compare-report-header">
-                  <p className="scheme-kicker">Scenario comparison</p>
-                  <h2>Comparison cards</h2>
-                </header>
-                <ScenarioCompareGrid items={compareItems} />
-              </section>
-            ) : null}
-
-            {selectedSections.has("map") ? (
-              <section className="compare-report-page">
-                <header className="compare-report-header">
-                  <p className="scheme-kicker">Visualisation</p>
-                  <h2>Lifecycle map</h2>
-                </header>
-                <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} />
-              </section>
-            ) : null}
-
-            {selectedSections.has("co2") ? (
-              <section className="compare-report-page">
-                <header className="compare-report-header">
-                  <p className="scheme-kicker">Visualisation</p>
-                  <h2>CO2 savings view</h2>
-                </header>
-                <section className="compare-co2-image-card">
-                  <img src="/co2-image.png" alt="CO2 savings visual" className="compare-co2-image" />
+          <>
+            <CompareReportPreviewActions
+              schemeId={schemeId}
+              schemeName={scheme?.name ?? "Scheme comparison"}
+              selectedItems={selected}
+              selectedSections={Array.from(selectedSections)}
+              defaultReportEmail={userReportPreferences?.default_report_email ?? ""}
+              defaultGoogleDriveFolder={userReportPreferences?.google_drive_folder ?? ""}
+            />
+            <div className="compare-report-pages">
+              {hasOverviewPage ? (
+                <section className="compare-report-page compare-report-page-overview">
+                  <header className="compare-report-header">
+                    <img src="/branding/holcim.png" alt="Holcim logo" className="compare-report-logo" />
+                    <p className="scheme-kicker">Carbon Comparison</p>
+                    <h1>{scheme?.name ?? "Scheme comparison"}</h1>
+                  </header>
+                  <div className="compare-report-overview-content">
+                    {selectedGraphSections.length ? (
+                      <section className="compare-charts">
+                        {selectedGraphSections.map((stage) => (
+                          <ScenarioCompareStageChart key={stage} items={compareItems} stage={stage} />
+                        ))}
+                      </section>
+                    ) : null}
+                    {selectedSections.has("recycled") ? <ScenarioCompareRecycledSection items={compareItems} /> : null}
+                  </div>
+                  {lastReportPage === "overview" ? (
+                    <p className="compare-report-disclaimer">{disclaimerText}</p>
+                  ) : null}
                 </section>
-              </section>
-            ) : null}
-          </div>
+              ) : null}
+
+              {hasCardsPage ? (
+                <section className="compare-report-page">
+                  <header className="compare-report-header">
+                    <img src="/branding/holcim.png" alt="Holcim logo" className="compare-report-logo" />
+                    <p className="scheme-kicker">Carbon Comparison</p>
+                    <h2>Comparison cards</h2>
+                  </header>
+                  <ScenarioCompareGrid items={compareItems} />
+                  {lastReportPage === "cards" ? (
+                    <p className="compare-report-disclaimer">{disclaimerText}</p>
+                  ) : null}
+                </section>
+              ) : null}
+
+              {hasMapPage ? (
+                <section className="compare-report-page compare-report-page-map">
+                  <header className="compare-report-header">
+                    <img src="/branding/holcim.png" alt="Holcim logo" className="compare-report-logo" />
+                  </header>
+                  <ScenarioCompareMap items={compareItems} layouts={mapLayouts ?? []} reportOnly />
+                  {lastReportPage === "map" ? (
+                    <p className="compare-report-disclaimer">{disclaimerText}</p>
+                  ) : null}
+                </section>
+              ) : null}
+
+              {hasCo2Page ? (
+                <section className="compare-report-page compare-report-page-co2">
+                  <header className="compare-report-header">
+                    <img src="/branding/holcim.png" alt="Holcim logo" className="compare-report-logo" />
+                  </header>
+                  <ScenarioCompareCO2Equivalency
+                    tonnes={deltaPerTonne ?? 0}
+                    equivalencies={(co2Equivalencies ?? []) as ReportMetric[]}
+                    layouts={(co2Layouts ?? []) as ReportLayout[]}
+                  />
+                  {lastReportPage === "co2" ? (
+                    <p className="compare-report-disclaimer">{disclaimerText}</p>
+                  ) : null}
+                </section>
+              ) : null}
+            </div>
+          </>
         )}
 
         {reportMode && autoprint === "1" ? (

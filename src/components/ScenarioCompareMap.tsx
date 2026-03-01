@@ -62,9 +62,11 @@ const formatValue = (value: number | null, digits = 1) => {
 export function ScenarioCompareMap({
   items,
   layouts = [],
+  reportOnly = false,
 }: {
   items: CompareItem[];
   layouts?: LayoutEntry[];
+  reportOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -173,6 +175,7 @@ export function ScenarioCompareMap({
   };
 
   const handleZoom = (event: React.WheelEvent) => {
+    if (reportOnly) return;
     if (!event.ctrlKey) return;
     event.preventDefault();
     const delta = event.deltaY > 0 ? -0.1 : 0.1;
@@ -180,6 +183,7 @@ export function ScenarioCompareMap({
   };
 
   const toggleFullscreen = async () => {
+    if (reportOnly) return;
     if (typeof document === "undefined") return;
     if (document.fullscreenElement) {
       await document.exitFullscreen();
@@ -200,6 +204,7 @@ export function ScenarioCompareMap({
   }, []);
 
   const handleDragStart = (key: string, event: React.PointerEvent) => {
+    if (reportOnly) return;
     if (!editing) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -233,6 +238,7 @@ export function ScenarioCompareMap({
   };
 
   const handleResizeStart = (key: string, event: React.PointerEvent) => {
+    if (reportOnly) return;
     if (!editing) return;
     event.preventDefault();
     event.stopPropagation();
@@ -267,6 +273,7 @@ export function ScenarioCompareMap({
   };
 
   const saveLayouts = async () => {
+    if (reportOnly) return;
     if (!markerDefinitions.length) return;
     setSaving(true);
     setSaveError(null);
@@ -301,58 +308,69 @@ export function ScenarioCompareMap({
   }
 
   return (
-    <section className="compare-map-card">
-      <div className="compare-map-header">
-        <div>
-          <p className="scheme-kicker">Lifecycle map</p>
-          <h2>{activeItem?.title ?? "Scenario map"}</h2>
-          <p className="compare-map-meta">
-            Labels show per-stage totals (tCO2e) for the currently selected scenario.
-          </p>
+    <section className={`compare-map-card ${reportOnly ? "is-report-only" : ""}`}>
+      {!reportOnly ? (
+        <div className="compare-map-header">
+          <div>
+            <p className="scheme-kicker">Lifecycle map</p>
+            <h2>{activeItem?.title ?? "Scenario map"}</h2>
+            <p className="compare-map-meta">
+              Labels show per-stage totals (tCO2e) for the currently selected scenario.
+            </p>
+          </div>
+          <div className="compare-map-actions">
+            <button type="button" className="btn-secondary" onClick={toggleFullscreen}>
+              {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            </button>
+            <button
+              type="button"
+              className={`btn-secondary ${editing ? "is-active" : ""}`}
+              onClick={() => setEditing((prev) => !prev)}
+            >
+              {editing ? "Stop editing" : "Edit labels"}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={saveLayouts}
+              disabled={!editing || saving}
+            >
+              {saving ? "Saving..." : "Save layout"}
+            </button>
+          </div>
         </div>
-        <div className="compare-map-actions">
-          <button type="button" className="btn-secondary" onClick={toggleFullscreen}>
-            {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-          </button>
-          <button
-            type="button"
-            className={`btn-secondary ${editing ? "is-active" : ""}`}
-            onClick={() => setEditing((prev) => !prev)}
-          >
-            {editing ? "Stop editing" : "Edit labels"}
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={saveLayouts}
-            disabled={!editing || saving}
-          >
-            {saving ? "Saving..." : "Save layout"}
-          </button>
+      ) : null}
+
+      {!reportOnly && saveError ? <p className="create-scheme-message error">{saveError}</p> : null}
+
+      {!reportOnly ? (
+        <div className="compare-map-selection">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`btn-secondary ${activeItemId === item.id ? "is-active" : ""}`}
+              onClick={() => setActiveItemId(item.id)}
+            >
+              {item.title}
+            </button>
+          ))}
         </div>
-      </div>
-
-      {saveError ? <p className="create-scheme-message error">{saveError}</p> : null}
-
-      <div className="compare-map-selection">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`btn-secondary ${activeItemId === item.id ? "is-active" : ""}`}
-            onClick={() => setActiveItemId(item.id)}
-          >
-            {item.title}
-          </button>
-        ))}
-      </div>
+      ) : null}
 
       <div
         ref={fullscreenRef}
-        className={`compare-map-wrap ${isFullscreen ? "is-fullscreen" : ""}`}
+        className={`compare-map-wrap ${isFullscreen ? "is-fullscreen" : ""} ${
+          reportOnly ? "is-report-only" : ""
+        }`}
         onWheel={handleZoom}
       >
-        <div className="compare-map-zoom" style={{ transform: `scale(${zoom})` }}>
+        <div
+          className="compare-map-zoom"
+          style={{
+            transform: reportOnly ? "translateX(1.3%) scale(1.03)" : `scale(${zoom})`,
+          }}
+        >
           <img
             src="/neils-map.png"
             alt="Carbon life-cycle map"
@@ -375,11 +393,13 @@ export function ScenarioCompareMap({
                   className="compare-map-label"
                   style={{
                     left: `${layout.x}%`,
-                    top: `${layout.y}%`,
-                    transform: `translate(-50%, -100%) scale(${layout.scale})`,
+                    top: reportOnly ? `calc(${layout.y}% + 12px)` : `${layout.y}%`,
+                    transform: `translate(-50%, -100%) scale(${
+                      reportOnly ? layout.scale * 0.62 : layout.scale
+                    })`,
                     transformOrigin: "50% 100%",
-                    pointerEvents: editing ? "auto" : "none",
-                    cursor: editing ? "move" : "default",
+                    pointerEvents: editing && !reportOnly ? "auto" : "none",
+                    cursor: editing && !reportOnly ? "move" : "default",
                     touchAction: "none",
                   }}
                   onPointerDown={(event) => handleDragStart(marker.key, event)}

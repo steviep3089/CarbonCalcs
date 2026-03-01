@@ -117,11 +117,13 @@ h3,
 }
 
 .login-page {
+  position: relative;
   min-height: 100vh;
   display: grid;
   place-items: stretch;
   background: var(--app-bg);
   color: var(--text-primary);
+  overflow: hidden;
 }
 
 .login-bg {
@@ -271,6 +273,20 @@ h3,
 .login-meta a {
   color: var(--accent);
   text-decoration: none;
+}
+
+.login-credit {
+  position: absolute;
+  right: clamp(16px, 3vw, 28px);
+  bottom: clamp(12px, 2vw, 20px);
+  margin: 0;
+  z-index: 4;
+  font-size: 0.78rem;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
 }
 
 .link-button {
@@ -1847,6 +1863,63 @@ h3,
   font-size: 0.85rem;
 }
 
+.compare-report-email-card {
+  width: min(560px, 100%);
+}
+
+.compare-report-email-card h2 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.compare-report-email-form {
+  display: grid;
+  gap: 14px;
+}
+
+.compare-report-email-field {
+  display: grid;
+  gap: 8px;
+}
+
+.compare-report-email-field span,
+.compare-report-email-options legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.compare-report-email-field input {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  padding: 12px 14px;
+}
+
+.compare-report-email-field small {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.compare-report-email-options {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.compare-report-email-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+
 .compare-page .scheme-detail-header {
   align-items: center;
 }
@@ -1898,9 +1971,8 @@ h3,
 }
 
 .compare-card-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(8.5rem);
   gap: 16px;
   align-items: flex-start;
 }
@@ -1924,135 +1996,75 @@ h3,
 }
 
 .compare-report-options {
-  width: 100%;
-  margin: 0 auto;
-  padding: 20px;
-  background: #d1d5db;
-  color: #000000;
+  display: grid;
+  gap: 8px;
+}
+
+.compare-report-option {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-.compare-report-pages {
-  display: grid;
-  gap: 18px;
-  justify-items: center;
+  font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
-.compare-report-page {
-  width: 210mm;
-  min-height: 297mm;
-  max-width: 100%;
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #d4d4d8;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.16);
-  padding: 12mm;
-  display: grid;
-  gap: 10px;
-  align-content: start;
-  overflow: hidden;
-}
-
-.compare-report-header h1,
-.compare-report-header h2 {
-  margin: 4px 0 0;
-  color: #0f172a;
-}
-
-.compare-report-mode .scheme-kicker,
-.compare-report-mode .scheme-muted,
-.compare-report-mode .compare-chart-label,
-.compare-report-mode .compare-chart-bar-value,
-.compare-report-mode .compare-card-totals span,
-.compare-report-mode .compare-narrative,
-.compare-report-mode .compare-bullets,
-.compare-report-mode .compare-map-meta,
-.compare-report-mode .lifecycle-desc {
-  color: #334155 !important;
-}
-
-.compare-report-mode .compare-chart-header h3,
-.compare-report-mode .compare-card-header h2,
-.compare-report-mode .compare-card-totals strong,
-.compare-report-mode .lifecycle-right,
-.compare-report-mode .compare-recycled-overlay strong {
-  color: #0f172a !important;
-}
-
-.compare-report-mode .compare-chart,
-.compare-report-mode .compare-map-card,
-.compare-report-mode .compare-co2-image-card,
-.compare-report-mode .compare-recycled-panel,
-.compare-report-mode .scheme-card {
-  box-shadow: none;
-  border-color: #cbd5e1;
-  background: #ffffff;
-}
-
-.compare-report-mode .compare-charts {
-  gap: 10px;
-}
-
-.compare-report-mode .compare-chart {
-  padding: 10px 12px 12px;
-}
-
-.compare-report-mode .compare-chart-bars {
-  min-height: 92px;
-}
-
-.compare-report-mode .compare-chart-bar {
-  height: 120px;
-}
-
-.compare-report-mode .compare-chart-bar.compare-chart-bar-short {
-  height: 110px;
-}
-
-.compare-report-mode .compare-chart-bar-fill {
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.compare-report-mode .compare-recycled-section {
-  gap: 10px;
-}
-
-.compare-report-mode .compare-recycled-image {
-  max-height: 210px;
-  width: auto;
-  max-width: 100%;
-}
-
-.compare-report-mode .compare-recycled-overlay {
-  inset: auto 14px 14px;
-  background: rgba(15, 23, 42, 0.92);
-}
-
-.compare-report-mode .compare-recycled-overlay span,
-.compare-report-mode .compare-recycled-overlay strong {
-  color: #ffffff !important;
-}
-
-.compare-report-mode .compare-map-wrap {
-  min-height: 250px;
-}
-
-.compare-report-mode .compare-co2-image {
-  max-height: 250px;
-  object-fit: contain;
+.compare-report-actions {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.compare-card-header h2 {
+.compare-report-actions .btn-secondary,
+.compare-report-actions .btn-primary,
+.compare-report-toolbar-actions .btn-secondary,
+.compare-report-toolbar-actions .btn-primary {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8f2fb;
+  color: #11324d;
+  border: 1px solid #7aa7cf;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.compare-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.compare-card {
+  margin-top: 0;
+}
+
+.compare-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(8.5rem);
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.compare-card-heading,
+.compare-card-header > :first-child {
+  min-width: 0;
+}
+
+.compare-card-header h2,
+.compare-card-title {
   margin: 6px 0 0;
   font-size: 1.4rem;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .compare-card-totals {
   display: grid;
   gap: 8px;
   text-align: right;
+  align-self: start;
+  justify-self: end;
+  min-width: 8.5rem;
 }
 
 .compare-card-totals span {
@@ -2131,6 +2143,15 @@ h3,
   gap: 16px;
 }
 
+.compare-map-card.is-report-only {
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  gap: 0;
+}
+
 .compare-co2-image-card {
   margin-top: 20px;
   padding: 18px 20px 22px;
@@ -2145,6 +2166,23 @@ h3,
   display: block;
   border-radius: 12px;
   margin-top: 12px;
+}
+
+.compare-co2-equivalency-card {
+  margin-top: 12px;
+}
+
+.compare-co2-equivalency-card .reports-image-wrap {
+  margin-top: 0;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label {
+  font-size: 0.78rem;
+  padding: 5px 8px;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-number {
+  font-size: 0.82rem;
 }
 
 .compare-map-header {
@@ -2181,6 +2219,52 @@ h3,
   min-height: 360px;
 }
 
+.compare-map-wrap.is-report-only {
+  min-height: 0;
+  background: transparent;
+  border-radius: 0;
+  width: 84%;
+  padding-top: 10px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.compare-map-wrap.is-report-only .compare-map-zoom {
+  width: 100%;
+  transform-origin: top center;
+}
+
+.compare-map-wrap.is-report-only .compare-map-zoom::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(#ffffff, #ffffff) top / 100% 6px no-repeat,
+    linear-gradient(#ffffff, #ffffff) right / 4px 100% no-repeat,
+    linear-gradient(#ffffff, #ffffff) bottom / 100% 4px no-repeat;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.compare-map-wrap.is-report-only .compare-map-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+}
+
+.compare-map-wrap.is-report-only .compare-map-label {
+  padding: 5px 9px 14px;
+}
+
+.compare-map-wrap.is-report-only .compare-map-label-stage {
+  font-size: 1rem;
+}
+
+.compare-map-wrap.is-report-only .compare-map-label-value {
+  font-size: 0.88rem;
+}
+
+
 .compare-map-wrap.is-fullscreen {
   position: fixed;
   inset: 0;
@@ -2206,6 +2290,7 @@ h3,
   max-width: 100%;
   max-height: 100%;
 }
+
 .compare-map-zoom {
   position: relative;
   width: 100%;
@@ -2224,6 +2309,7 @@ h3,
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .compare-map-layer.is-editing {
@@ -2235,7 +2321,7 @@ h3,
   display: grid;
   gap: 4px;
   align-items: center;
-  padding: 8px 12px 20px;
+  padding: 6px 10px 16px;
   border-radius: 0;
   background: transparent;
   border: none;
@@ -2265,7 +2351,7 @@ h3,
 }
 
 .compare-map-label-stage {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2278,7 +2364,7 @@ h3,
 }
 
 .compare-map-label-value {
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #ffffff;
 }
@@ -2335,9 +2421,12 @@ h3,
 }
 
 .compare-chart-group {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  align-self: stretch;
   gap: 8px;
-  justify-items: center;
   min-width: 0;
 }
 
@@ -2349,6 +2438,7 @@ h3,
   align-items: end;
   grid-auto-flow: column;
   grid-auto-columns: minmax(36px, 1fr);
+  align-self: end;
 }
 
 .compare-chart-bar {
@@ -2367,90 +2457,84 @@ h3,
   align-items: flex-end;
 }
 
-@media (max-width: 1100px) {
-  .compare-charts {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 12mm;
-  }
-
-  .compare-report-runner,
-  .compare-header-actions,
-  .global-top-logo-wrap {
-    display: none !important;
-  }
-
-  .compare-report-mode {
-    padding: 0 !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  .compare-report-page {
-    box-shadow: none !important;
-    border: none !important;
-    width: auto !important;
-    min-height: auto !important;
-    margin: 0 !important;
-    page-break-after: always;
-    break-after: page;
-  }
-
-  .compare-report-page:last-child {
-    page-break-after: auto;
-    break-after: auto;
-  }
-
-  .compare-report-mode .scheme-card,
-  .compare-report-mode .compare-chart,
-  .compare-report-mode .compare-map-card,
-  .compare-report-mode .compare-co2-image-card,
-  .compare-report-mode .compare-recycled-panel {
-    break-inside: avoid;
-    box-shadow: none;
-  }
-}
-
-.compare-report-mode {
-  width: 210mm;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 12mm;
-  background: #ffffff;
-  color: #000000;
-}
-
-.compare-report-mode .scheme-card,
-.compare-report-mode .compare-chart,
-.compare-report-mode .compare-map-card,
-.compare-report-mode .compare-co2-image-card,
-.compare-report-mode .compare-recycled-panel {
-  box-shadow: none;
-}
-
 .compare-chart-bar-fill {
   width: 100%;
-  border-radius: 18px 18px 0 0;
+  border-radius: 0;
   display: inline-block;
   min-height: 6px;
   transition: height 0.3s ease;
 }
 
 .compare-chart-bar-value {
+  display: block;
+  height: 1.2em;
+  line-height: 1.2;
   font-size: 0.8rem;
   color: var(--text-muted);
 }
 
 .compare-chart-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  width: 100%;
+  height: 5.2em;
+  line-height: 1.3;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-primary);
   text-align: center;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.compare-recycled-chart .compare-chart-bars {
+  width: 100%;
+  min-height: 190px;
+  height: 190px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  align-self: end;
+}
+
+.compare-recycled-chart .compare-chart-bar.compare-chart-bar-short {
+  width: 100%;
+  height: 190px;
+}
+
+.compare-report-mode .compare-recycled-chart .compare-chart-bars {
+  min-height: 132px;
+  height: 132px;
+}
+
+.compare-report-mode .compare-recycled-chart .compare-chart-bar.compare-chart-bar-short {
+  height: 132px;
+}
+
+.compare-report-mode .compare-chart-bar-value {
+  height: 1.1em;
+  line-height: 1.1;
+  font-size: 0.78rem;
+}
+
+.compare-report-mode .compare-chart-label {
+  -webkit-line-clamp: 4;
+  height: 4.8em;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.compare-recycled-chart .compare-chart-bar-slot {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.compare-recycled-chart .compare-chart-bar-fill {
+  position: static;
 }
 
 .compare-recycled-section {
@@ -2481,8 +2565,8 @@ h3,
 }
 
 .compare-recycled-image {
-  width: 100%;
-  max-width: 560px;
+  width: 78%;
+  max-width: 440px;
   height: auto;
   object-fit: contain;
   display: block;
@@ -2490,7 +2574,9 @@ h3,
 
 .compare-recycled-overlay {
   position: absolute;
-  inset: auto 24px 24px;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  transform-origin: center;
   justify-self: center;
   text-align: center;
   display: grid;
@@ -2514,8 +2600,582 @@ h3,
 }
 
 @media (max-width: 1100px) {
+  .compare-charts {
+    grid-template-columns: 1fr;
+  }
+
   .compare-recycled-section {
     grid-template-columns: 1fr;
+  }
+}
+
+.compare-report-mode {
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  background: #d1d5db;
+  color: #000000;
+}
+
+.compare-report-pages {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+}
+
+.compare-report-toolbar {
+  width: min(210mm, 100%);
+  margin: 0 auto 16px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+}
+
+.compare-report-toolbar p {
+  margin: 0;
+}
+
+.compare-report-toolbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.compare-report-actions .btn-primary,
+.compare-report-toolbar-actions .btn-primary {
+  color: #11324d;
+}
+
+.compare-report-page {
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #d4d4d8;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.16);
+  padding: 12mm;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  overflow: hidden;
+  position: relative;
+}
+
+.compare-report-disclaimer {
+  position: absolute;
+  left: 12mm;
+  right: 12mm;
+  bottom: 8mm;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: #475569;
+  text-align: center;
+}
+
+.compare-report-header h1,
+.compare-report-header h2 {
+  margin: 4px 0 0;
+  color: #0f172a;
+}
+
+.compare-report-logo {
+  display: block;
+  width: min(150px, 28%);
+  height: auto;
+  margin: 7mm auto 3mm;
+}
+
+.compare-report-mode .scheme-kicker,
+.compare-report-mode .scheme-muted,
+.compare-report-mode .compare-chart-label,
+.compare-report-mode .compare-chart-bar-value,
+.compare-report-mode .compare-card-totals span,
+.compare-report-mode .compare-narrative,
+.compare-report-mode .compare-bullets,
+.compare-report-mode .compare-map-meta,
+.compare-report-mode .lifecycle-desc {
+  color: #334155 !important;
+}
+
+.compare-report-mode .compare-chart-header h3,
+.compare-report-mode .compare-card-header h2,
+.compare-report-mode .compare-card-totals strong,
+.compare-report-mode .lifecycle-right,
+.compare-report-mode .compare-recycled-overlay strong {
+  color: #0f172a !important;
+}
+
+.compare-report-mode .compare-chart-legend,
+.compare-report-mode .compare-legend-item,
+.compare-report-mode .compare-chart-label,
+.compare-report-mode .compare-chart-bar-value {
+  color: #334155 !important;
+}
+
+.compare-report-mode .compare-chart,
+.compare-report-mode .compare-map-card,
+.compare-report-mode .compare-co2-image-card,
+.compare-report-mode .compare-recycled-panel,
+.compare-report-mode .scheme-card {
+  box-shadow: none;
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.compare-report-mode .compare-charts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.compare-report-mode .compare-chart {
+  padding: 8px 10px 10px;
+  display: grid;
+  align-content: end;
+}
+
+.compare-report-mode .compare-chart-bars {
+  min-height: 72px;
+}
+
+.compare-report-mode .compare-chart-bar {
+  height: 80px;
+}
+
+.compare-report-mode .compare-chart-bar.compare-chart-bar-short {
+  height: 72px;
+}
+
+.compare-report-mode .compare-chart-bar-fill {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.compare-report-mode .compare-chart-header {
+  min-height: 60px;
+}
+
+.compare-report-mode .compare-legend-swatch {
+  border-color: rgba(15, 23, 42, 0.65);
+}
+
+.compare-report-mode .compare-recycled-section {
+  gap: 8px;
+}
+
+.compare-report-mode .compare-report-page {
+  gap: 8px;
+}
+
+.compare-report-page.compare-report-page-overview {
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+  padding: 5mm 6mm 7mm;
+}
+
+.compare-report-overview-content {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-report-header {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+}
+
+.compare-report-page.compare-report-page-overview .compare-report-logo {
+  width: 30mm;
+  margin: 2mm auto 1mm;
+}
+
+.compare-report-page.compare-report-page-overview .compare-charts {
+  gap: 6px 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart {
+  padding: 4px 6px 6px;
+}
+
+.compare-report-mode .compare-report-page.compare-report-page-overview .compare-charts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart-header {
+  min-height: 42px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart-bars {
+  min-height: 122px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart-bar {
+  height: 132px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart-bar.compare-chart-bar-short {
+  height: 122px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-section {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.compare-report-mode .compare-report-page.compare-report-page-overview .compare-recycled-section {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-chart .compare-chart-bars {
+  min-height: 176px;
+  height: 176px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-chart .compare-chart-bar.compare-chart-bar-short {
+  height: 176px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-panel {
+  min-height: 255px;
+  padding: 4px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-image {
+  width: 72%;
+  max-width: none;
+  max-height: 72%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-overlay {
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  transform-origin: center;
+  padding: 8px 13px;
+  border-radius: 10px;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-overlay span {
+  font-size: 0.68rem;
+  color: #020617;
+}
+
+.compare-report-page.compare-report-page-overview .compare-recycled-overlay strong {
+  font-size: 1.15rem;
+  color: #020617;
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart-label {
+  height: 4.2em;
+  font-size: 0.78rem;
+  line-height: 1.15;
+}
+
+.compare-report-page.compare-report-page-overview .compare-chart-bar-value {
+  font-size: 0.74rem;
+}
+
+.compare-report-mode .compare-recycled-image {
+  max-height: 140px;
+  width: auto;
+  max-width: 100%;
+}
+
+.compare-report-mode .compare-recycled-overlay {
+  inset: auto 12px 12px;
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.compare-report-mode .compare-recycled-overlay span,
+.compare-report-mode .compare-recycled-overlay strong {
+  color: #ffffff !important;
+}
+
+.compare-report-mode .compare-map-wrap {
+  min-height: 170px;
+}
+
+.compare-report-mode .compare-co2-image {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  margin-top: 0;
+  object-fit: contain;
+}
+
+.compare-report-page.compare-report-page-co2 {
+  width: min(1122px, calc(100vw - 40px));
+  max-width: 1122px;
+  aspect-ratio: 297 / 210;
+  min-height: unset;
+  height: auto;
+  align-content: stretch;
+  grid-template-rows: auto 1fr;
+}
+
+.compare-report-page.compare-report-page-map {
+  width: min(1122px, calc(100vw - 40px));
+  max-width: 1122px;
+  aspect-ratio: 297 / 210;
+  min-height: unset;
+  height: auto;
+  align-content: stretch;
+  grid-template-rows: auto 1fr;
+}
+
+.compare-report-page.compare-report-page-map .compare-map-card {
+  min-height: 0;
+  height: auto;
+  width: 100%;
+  align-content: start;
+}
+
+.compare-report-page.compare-report-page-map .compare-report-header {
+  display: grid;
+  justify-items: center;
+}
+
+.compare-report-page.compare-report-page-map .compare-report-logo {
+  margin: 3mm auto 1.5mm;
+}
+
+.compare-report-page.compare-report-page-co2 .compare-co2-image-card {
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  height: 100%;
+}
+
+.compare-report-page.compare-report-page-co2 .compare-co2-equivalency-card {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  align-content: stretch;
+  margin-top: 0;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-image-wrap {
+  margin-top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-image-zoom {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: inline-block;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-equivalency-image {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-equivalency-label {
+  font-size: 0.7rem;
+  padding: 3px 6px;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-equivalency-number {
+  font-size: 0.76rem;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  @page co2-landscape {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  .compare-report-runner,
+  .compare-header-actions,
+  .compare-report-toolbar,
+  .global-top-logo-wrap {
+    display: none !important;
+  }
+
+  .compare-report-mode {
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .compare-report-page {
+    box-shadow: none !important;
+    border: none !important;
+    width: 186mm !important;
+    min-height: 273mm !important;
+    height: 273mm !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+    overflow: hidden !important;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .compare-report-page.compare-report-page-overview {
+    padding: 1mm 2mm 2mm !important;
+    display: grid !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-report-logo {
+    width: 24mm !important;
+    margin: 1mm auto 0.5mm !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-report-header h1 {
+    font-size: 1rem;
+    margin-top: 1px;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-report-overview-content {
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    min-height: 0;
+    display: grid;
+    align-content: start;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-charts {
+    gap: 5px 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-recycled-section {
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-recycled-panel {
+    min-height: 225px;
+    padding: 4px;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-recycled-overlay {
+    background: #ffffff !important;
+    border: 1px solid #64748b !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart {
+    padding: 3px 5px 5px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart-header {
+    min-height: 38px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart-bars {
+    min-height: 110px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart-bar {
+    height: 118px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart-bar.compare-chart-bar-short {
+    height: 110px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart-label {
+    height: 3.8em !important;
+    font-size: 0.72rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-chart-bar-value {
+    font-size: 0.68rem !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-recycled-chart .compare-chart-bars {
+    min-height: 158px !important;
+    height: 158px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-recycled-chart .compare-chart-bar.compare-chart-bar-short {
+    height: 158px !important;
+  }
+
+  .compare-report-page.compare-report-page-overview .compare-recycled-overlay span,
+  .compare-report-page.compare-report-page-overview .compare-recycled-overlay strong {
+    color: #000000 !important;
+    font-weight: 800 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .compare-report-disclaimer {
+    left: 8mm;
+    right: 8mm;
+    bottom: 6mm;
+    font-size: 0.68rem;
+  }
+
+  .compare-report-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .compare-report-page.compare-report-page-co2 {
+    page: co2-landscape;
+    width: 273mm !important;
+    min-height: 186mm !important;
+    height: 186mm !important;
+    padding: 2mm !important;
+  }
+
+  .compare-report-page.compare-report-page-map {
+    page: co2-landscape;
+    width: 273mm !important;
+    min-height: 186mm !important;
+    height: 186mm !important;
+    padding: 2mm !important;
+  }
+
+  .compare-report-mode .scheme-card,
+  .compare-report-mode .compare-chart,
+  .compare-report-mode .compare-map-card,
+  .compare-report-mode .compare-co2-image-card,
+  .compare-report-mode .compare-recycled-panel {
+    break-inside: avoid;
+    box-shadow: none;
   }
 }
 
@@ -3269,6 +3929,60 @@ h3,
 .reports-equivalency-label.stadium {
   top: 54%;
   left: 50%;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label {
+  font-size: 0.82rem !important;
+  padding: 5px 9px !important;
+  gap: 7px !important;
+  border-radius: 999px !important;
+  max-width: none !important;
+  width: max-content !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  line-height: 1.2 !important;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label span {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label span:last-child {
+  display: inline-block;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label.energy {
+  font-size: 0.72rem !important;
+  padding: 3px 7px !important;
+  gap: 6px !important;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label.flights {
+  white-space: normal !important;
+  align-items: flex-start !important;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-label.flights span:last-child {
+  white-space: normal !important;
+  line-height: 1.12 !important;
+  max-width: 190px !important;
+  text-align: center !important;
+}
+
+.compare-co2-equivalency-card .reports-equivalency-number {
+  font-size: 0.84rem !important;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-equivalency-label {
+  font-size: 0.75rem !important;
+  padding: 4px 7px !important;
+}
+
+.compare-report-mode .compare-co2-equivalency-card .reports-equivalency-number {
+  font-size: 0.78rem !important;
 }
 
 .admin-report-section {

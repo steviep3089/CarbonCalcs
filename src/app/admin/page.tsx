@@ -2,6 +2,7 @@ import { AuthGate } from "@/components/AuthGate";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { AdminTabs } from "@/components/AdminTabs";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import Link from "next/link";
 import {
   createInstallationSetup,
   createMaterialMapping,
@@ -15,6 +16,7 @@ import {
   deleteReportMetric,
   inviteUser,
   setPlantMixDefault,
+  saveUserReportPreferences,
   updateGhgCategory,
   updateGhgFactorFilter,
   setGhgFactorFiltersActive,
@@ -33,6 +35,9 @@ import {
 
 export default async function AdminPage() {
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: plants } = await supabase
     .from("plants")
@@ -122,6 +127,14 @@ export default async function AdminPage() {
     .order("level3", { ascending: true })
     .order("level4", { ascending: true });
 
+  const { data: userReportPreferences } = user
+    ? await supabase
+        .from("user_report_preferences")
+        .select("default_report_email, google_drive_folder")
+        .eq("user_id", user.id)
+        .maybeSingle()
+    : { data: null };
+
   return (
     <AuthGate>
       <main className="admin-page">
@@ -136,9 +149,9 @@ export default async function AdminPage() {
             </div>
             <div className="admin-header-actions">
               <ThemeToggle />
-              <a className="btn-secondary" href="/schemes">
+              <Link className="btn-secondary" href="/schemes">
                 Back to schemes
-              </a>
+              </Link>
             </div>
           </div>
         </header>
@@ -153,6 +166,7 @@ export default async function AdminPage() {
           reportMetrics={reportMetrics ?? []}
           ghgCategories={ghgCategories ?? []}
           ghgFilters={ghgFilters ?? []}
+          userReportPreferences={userReportPreferences}
           actions={{
             createPlant,
             updatePlant,
@@ -173,6 +187,7 @@ export default async function AdminPage() {
             createMaterialMapping,
             uploadMaterialMappings,
             inviteUser,
+            saveUserReportPreferences,
             createReportMetric,
             updateReportMetric,
             deleteReportMetric,

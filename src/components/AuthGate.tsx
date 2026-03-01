@@ -48,14 +48,7 @@ export function AuthGate({ children }: AuthGateProps) {
   }, [router, pathname]);
 
   if (!ready) {
-    return (
-      <div className="auth-gate">
-        <div className="auth-gate-card">
-          <span className="auth-gate-dot" />
-          Checking session…
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return <>{children}</>;
