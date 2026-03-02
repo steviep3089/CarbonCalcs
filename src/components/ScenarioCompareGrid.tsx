@@ -90,25 +90,28 @@ export function ScenarioCompareGrid({ items }: { items: CompareItem[] }) {
             )}
 
             <div className="lifecycle-grid">
-              <div className="lifecycle-header">
-                <span>Stage</span>
-                <span>Description</span>
-                <span className="lifecycle-right">kgCO2e</span>
-                <span className="lifecycle-right">kgCO2e / t</span>
-              </div>
               {item.lifecycle.map((stage) => (
-                <details key={stage.stage} className="lifecycle-card">
-                  <summary className="lifecycle-summary">
-                    <div className="lifecycle-stage">
+                <details key={stage.stage} className="lifecycle-card compare-lifecycle-card">
+                  <summary className="lifecycle-summary compare-lifecycle-summary">
+                    <div className="lifecycle-stage compare-lifecycle-stage">
                       <span className="lifecycle-badge">{stage.stage}</span>
                     </div>
-                    <span className="lifecycle-desc">{stage.description}</span>
-                    <span className="lifecycle-right">
-                      {formatNumber(stage.total_kgco2e, 2)}
-                    </span>
-                    <span className="lifecycle-right">
-                      {formatNumber(stage.kgco2e_per_tonne, 2)}
-                    </span>
+                    <div className="compare-lifecycle-fields">
+                      <span>Description</span>
+                      <span className="lifecycle-right">kgCO2e</span>
+                      <span className="lifecycle-right">kgCO2e / t</span>
+                    </div>
+                    <div className="compare-lifecycle-metrics">
+                      <span className="lifecycle-desc compare-lifecycle-desc">
+                        {stage.description}
+                      </span>
+                      <span className="lifecycle-right compare-lifecycle-value">
+                        {formatNumber(stage.total_kgco2e, 2)}
+                      </span>
+                      <span className="lifecycle-right compare-lifecycle-value">
+                        {formatNumber(stage.kgco2e_per_tonne, 2)}
+                      </span>
+                    </div>
                   </summary>
                   {stage.details.length ? (
                     <div className="lifecycle-details">
@@ -140,7 +143,7 @@ export function ScenarioCompareGrid({ items }: { items: CompareItem[] }) {
               {!item.lifecycle.length ? (
                 <div className="compare-empty">
                   No lifecycle totals stored for this snapshot yet. Go back and click
-                  “Update scenario” to capture calculations.
+                  "Update scenario" to capture calculations.
                 </div>
               ) : null}
             </div>

@@ -1970,6 +1970,81 @@ h3,
   margin-top: 0;
 }
 
+.compare-card .compare-lifecycle-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.compare-card .compare-lifecycle-summary {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 16px 16px 18px;
+}
+
+.compare-card .compare-lifecycle-stage {
+  justify-content: center;
+}
+
+.compare-card .compare-lifecycle-fields,
+.compare-card .compare-lifecycle-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(82px, 0.8fr) minmax(82px, 0.8fr);
+  gap: 12px;
+}
+
+.compare-card .compare-lifecycle-fields {
+  align-items: end;
+  text-transform: uppercase;
+  font-size: 0.69rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding-bottom: 2px;
+}
+
+.compare-card .compare-lifecycle-metrics {
+  align-items: start;
+}
+
+.compare-card .compare-lifecycle-fields > *,
+.compare-card .compare-lifecycle-metrics > *,
+.compare-card .lifecycle-detail-summary > *,
+.compare-card .lifecycle-detail-head > *,
+.compare-card .lifecycle-detail-row > * {
+  min-width: 0;
+}
+
+.compare-card .compare-lifecycle-desc {
+  min-width: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.compare-card .lifecycle-right {
+  min-width: 82px;
+}
+
+.compare-card .compare-lifecycle-value {
+  justify-self: end;
+  font-size: 0.98rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.compare-card .lifecycle-badge {
+  min-width: 3rem;
+}
+
+.compare-card .lifecycle-detail-head,
+.compare-card .lifecycle-detail-row,
+.compare-card .lifecycle-detail-summary {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.95fr) minmax(82px, 0.8fr) minmax(82px, 0.8fr);
+}
+
 .compare-card-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) fit-content(8.5rem);
@@ -2730,6 +2805,50 @@ h3,
   box-shadow: none;
   border-color: #cbd5e1;
   background: #ffffff;
+}
+
+.compare-report-mode .compare-card .compare-lifecycle-fields {
+  color: #11324d !important;
+}
+
+.compare-report-mode .compare-card .lifecycle-card {
+  background: #e8f2fb;
+  border-color: #7aa7cf;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.compare-report-mode .compare-card .lifecycle-summary,
+.compare-report-mode .compare-card .lifecycle-desc,
+.compare-report-mode .compare-card .lifecycle-right,
+.compare-report-mode .compare-card .lifecycle-detail-row,
+.compare-report-mode .compare-card .lifecycle-empty {
+  color: #0b1b2b !important;
+}
+
+.compare-report-mode .compare-card .lifecycle-badge {
+  background: rgba(43, 167, 219, 0.22);
+  color: #0b1b2b;
+  border: 1px solid rgba(17, 50, 77, 0.18);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.compare-report-mode .compare-card .lifecycle-details,
+.compare-report-mode .compare-card .lifecycle-subdetails {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: #a7c4dd;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.compare-report-mode .compare-card .lifecycle-detail-head {
+  color: #11324d !important;
+}
+
+.compare-report-mode .compare-card .lifecycle-detail-row,
+.compare-report-mode .compare-card .lifecycle-detail-summary {
+  border-color: rgba(122, 167, 207, 0.45);
 }
 
 .compare-report-mode .compare-charts {
