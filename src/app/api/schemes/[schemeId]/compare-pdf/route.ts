@@ -1751,7 +1751,7 @@ export async function generateComparePdfExport(
   const [logoBytes, recycleBytes, mapBytes, co2Bytes] = await Promise.all([
     readPublicAsset("branding/holcim.png"),
     readPublicAsset("branding/recycle.png"),
-    readPublicAsset("neils-map-ppt.png"),
+    readPublicAsset("neils-map-ppt-v2.png"),
     readPublicAsset("co2-image.png"),
   ]);
 

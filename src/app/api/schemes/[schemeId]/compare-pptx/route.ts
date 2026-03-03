@@ -61,7 +61,7 @@ const IMAGE_SIZES = {
 const publicPath = (...parts: string[]) => path.join(process.cwd(), "public", ...parts);
 const logoPath = publicPath("branding", "holcim.png");
 const recyclePath = publicPath("branding", "recycle.png");
-const mapPath = publicPath("neils-map-ppt.png");
+const mapPath = publicPath("neils-map-ppt-v2.png");
 const co2Path = publicPath("co2-image.png");
 
 const pt = (value: number) => Number((value / 72).toFixed(4));

@@ -311,7 +311,7 @@ export function ScenarioCompareMap({
           }}
         >
           <img
-            src="/neils-map.png"
+            src="/neils-map-v2.png"
             alt="Carbon life-cycle map"
             className="compare-map-image"
           />
