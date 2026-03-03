@@ -662,14 +662,14 @@ const drawMapSlide = (
   isLastSlide: boolean
 ) => {
   const slide = pptx.addSlide();
-  const headerBottom = drawHeader(slide, undefined, { logoWidthPt: 92 });
+  const headerBottom = drawHeader(slide, undefined, { logoWidthPt: 82 });
   const mapRect = fitRect(
     IMAGE_SIZES.map.width,
     IMAGE_SIZES.map.height,
-    18,
-    headerBottom + 8,
-    SLIDE.widthPt - 36,
-    SLIDE.heightPt - headerBottom - (isLastSlide ? 34 : 22) - 16
+    4,
+    headerBottom + 2,
+    SLIDE.widthPt - 8,
+    SLIDE.heightPt - headerBottom - (isLastSlide ? 24 : 14) - 6
   );
 
   slide.addImage({

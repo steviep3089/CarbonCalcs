@@ -28,11 +28,6 @@ const markerDefinitions: MarkerDefinition[] = [
   { key: "compare-map-A3", stage: "A3", label: "A3" },
   { key: "compare-map-A4", stage: "A4", label: "A4" },
   { key: "compare-map-A5", stage: "A5", label: "A5" },
-  { key: "compare-map-B1-5", stage: "B1-B5", label: "B1-B5" },
-  { key: "compare-map-C1", stage: "C1", label: "C1" },
-  { key: "compare-map-C2", stage: "C2", label: "C2" },
-  { key: "compare-map-C3", stage: "C3", label: "C3" },
-  { key: "compare-map-C4", stage: "C4", label: "C4" },
 ];
 
 const layoutDefaults: Record<string, LabelLayout> = {
@@ -41,11 +36,6 @@ const layoutDefaults: Record<string, LabelLayout> = {
   "compare-map-A3": { x: 26, y: 40, scale: 1 },
   "compare-map-A4": { x: 31, y: 54, scale: 1 },
   "compare-map-A5": { x: 32, y: 70, scale: 1 },
-  "compare-map-B1-5": { x: 60, y: 34, scale: 1 },
-  "compare-map-C1": { x: 50, y: 24, scale: 1 },
-  "compare-map-C2": { x: 64, y: 34, scale: 1 },
-  "compare-map-C3": { x: 61, y: 52, scale: 1 },
-  "compare-map-C4": { x: 54, y: 68, scale: 1 },
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -109,33 +99,6 @@ export function ScenarioCompareMap({
       });
     });
 
-    if (!map.has("compare-map-B1-5")) {
-      const legacyKeys = [
-        "compare-map-B1",
-        "compare-map-B2",
-        "compare-map-B3",
-        "compare-map-B4",
-        "compare-map-B5",
-      ];
-      const legacyLayouts = legacyKeys
-        .map((key) => map.get(key))
-        .filter((value): value is LabelLayout => Boolean(value));
-      if (legacyLayouts.length) {
-        const sum = legacyLayouts.reduce(
-          (acc, layout) => ({
-            x: acc.x + layout.x,
-            y: acc.y + layout.y,
-            scale: acc.scale + layout.scale,
-          }),
-          { x: 0, y: 0, scale: 0 }
-        );
-        map.set("compare-map-B1-5", {
-          x: sum.x / legacyLayouts.length,
-          y: sum.y / legacyLayouts.length,
-          scale: sum.scale / legacyLayouts.length,
-        });
-      }
-    }
     return map;
   }, [layouts]);
 
@@ -162,17 +125,7 @@ export function ScenarioCompareMap({
     return map;
   }, [activeItem]);
 
-  const getStageValue = (stageKey: string) => {
-    if (stageKey === "B1-B5") {
-      const stages = ["B1", "B2", "B3", "B4", "B5"];
-      const values = stages
-        .map((stage) => stagePerTonne.get(stage))
-        .filter((value): value is number => value !== null && value !== undefined);
-      if (!values.length) return null;
-      return values.reduce((sum, value) => sum + value, 0);
-    }
-    return stagePerTonne.get(stageKey) ?? null;
-  };
+  const getStageValue = (stageKey: string) => stagePerTonne.get(stageKey) ?? null;
 
   const handleZoom = (event: React.WheelEvent) => {
     if (reportOnly) return;
@@ -368,7 +321,7 @@ export function ScenarioCompareMap({
         <div
           className="compare-map-zoom"
           style={{
-            transform: reportOnly ? "translateX(1.3%) scale(1.03)" : `scale(${zoom})`,
+            transform: reportOnly ? "translateX(0)" : `scale(${zoom})`,
           }}
         >
           <img

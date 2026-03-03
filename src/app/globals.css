@@ -2298,8 +2298,8 @@ h3,
   min-height: 0;
   background: transparent;
   border-radius: 0;
-  width: 84%;
-  padding-top: 10px;
+  width: 100%;
+  padding-top: 0;
   box-sizing: border-box;
   margin: 0 auto;
 }
@@ -3057,22 +3057,31 @@ h3,
   height: auto;
   align-content: stretch;
   grid-template-rows: auto 1fr;
+  padding: 5mm 4mm 4mm;
 }
 
 .compare-report-page.compare-report-page-map .compare-map-card {
   min-height: 0;
-  height: auto;
+  height: 100%;
   width: 100%;
-  align-content: start;
+  align-content: stretch;
 }
 
 .compare-report-page.compare-report-page-map .compare-report-header {
   display: grid;
   justify-items: center;
+  margin-bottom: 0;
 }
 
 .compare-report-page.compare-report-page-map .compare-report-logo {
-  margin: 3mm auto 1.5mm;
+  width: min(116px, 20%);
+  margin: 1mm auto 0.5mm;
+}
+
+.compare-report-page.compare-report-page-map .compare-map-wrap.is-report-only {
+  width: calc(100% + 54px);
+  max-width: none;
+  margin: 0 -27px;
 }
 
 .compare-report-page.compare-report-page-co2 .compare-co2-image-card {
