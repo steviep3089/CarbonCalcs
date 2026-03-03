@@ -1,5 +1,6 @@
 "use client";
 
+import { getStagePerTonneValue } from "@/lib/compare-stage-values";
 import { useState } from "react";
 
 type LifecycleDetail = {
@@ -27,6 +28,7 @@ export type CompareItem = {
   bullets: string[];
   lifecycle: LifecycleStage[];
   a1Factor?: number | null;
+  deliveredTonnage?: number | null;
   recycledPct?: number | null;
 };
 
@@ -109,7 +111,7 @@ export function ScenarioCompareGrid({ items }: { items: CompareItem[] }) {
                         {formatNumber(stage.total_kgco2e, 2)}
                       </span>
                       <span className="lifecycle-right compare-lifecycle-value">
-                        {formatNumber(stage.kgco2e_per_tonne, 2)}
+                        {formatNumber(getStagePerTonneValue(item, stage.stage), 2)}
                       </span>
                     </div>
                   </summary>
@@ -143,7 +145,7 @@ export function ScenarioCompareGrid({ items }: { items: CompareItem[] }) {
               {!item.lifecycle.length ? (
                 <div className="compare-empty">
                   No lifecycle totals stored for this snapshot yet. Go back and click
-                  "Update scenario" to capture calculations.
+                  {" "}Update scenario{" "}to capture calculations.
                 </div>
               ) : null}
             </div>

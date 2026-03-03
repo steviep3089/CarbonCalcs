@@ -526,6 +526,12 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     return total / factorByProduct.size;
   };
 
+  const computeDeliveredTonnage = (products: Snapshot["scheme_products"] = []) =>
+    products.reduce((sum, row) => {
+      const isDelivery = (row.delivery_type ?? "delivery").toLowerCase() === "delivery";
+      return isDelivery ? sum + (toNumber(row.tonnage) ?? 0) : sum;
+    }, 0);
+
   const computeRecycledPct = (products: Snapshot["scheme_products"] = []) => {
     let weightedTotal = 0;
     let totalTonnage = 0;
@@ -561,6 +567,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
       bullets: buildBullets(livePayload.products, livePayload.install, unit),
       lifecycle: buildLifecycle(livePayload.results),
       a1Factor: computeA1Factor(livePayload.products),
+      deliveredTonnage: computeDeliveredTonnage(livePayload.products),
       recycledPct: computeRecycledPct(livePayload.products),
     });
   }
@@ -590,6 +597,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
       ),
       lifecycle: buildLifecycle(snapshot.scheme_carbon_results ?? []),
       a1Factor: computeA1Factor(snapshot.scheme_products ?? []),
+      deliveredTonnage: computeDeliveredTonnage(snapshot.scheme_products ?? []),
       recycledPct: computeRecycledPct(snapshot.scheme_products ?? []),
     });
   });

@@ -1,5 +1,6 @@
 import path from "node:path";
 import PptxGenJS from "pptxgenjs";
+import { getComparisonCardStageRows } from "@/lib/compare-stage-values";
 import {
   DEFAULT_SECTIONS,
   DISCLAIMER_TEXT,
@@ -579,33 +580,26 @@ const drawComparisonCard = (slide: PptxGenJS.Slide, rect: Rect, item: CompareIte
   );
   cursorY += infoHeight + 12;
 
-  addTextBox(slide, "Stage", { x: innerX, y: cursorY, width: 36, height: 10 }, { fontSize: 7, bold: true, color: colors.muted });
-  addTextBox(slide, "Description", { x: innerX + 42, y: cursorY, width: innerWidth - 150, height: 10 }, { fontSize: 7, bold: true, color: colors.muted });
+  const lifecycleStages = getComparisonCardStageRows(item);
+  const stageColumnWidth = 48;
+  const descriptionX = innerX + stageColumnWidth + 8;
+
+  addTextBox(slide, "Stage", { x: innerX, y: cursorY, width: stageColumnWidth, height: 10 }, { fontSize: 7, bold: true, color: colors.muted });
+  addTextBox(slide, "Description", { x: descriptionX, y: cursorY, width: innerWidth - 164, height: 10 }, { fontSize: 7, bold: true, color: colors.muted });
   addTextBox(slide, "kgCO2e", { x: rect.x + rect.width - 110, y: cursorY, width: 54, height: 10 }, { fontSize: 7, bold: true, color: colors.muted, align: "right" });
   addTextBox(slide, "/ t", { x: rect.x + rect.width - 48, y: cursorY, width: 28, height: 10 }, { fontSize: 7, bold: true, color: colors.muted, align: "right" });
   cursorY += 10;
 
-  const lifecycleStages = ["A2", "A3", "A4", "A5"].map((stage) => {
-    const found = item.lifecycle.find((row) => row.stage === stage);
-    return {
-      stage,
-      description: found?.description ?? stage,
-      total: found?.total_kgco2e ?? null,
-      perTonne: found?.kgco2e_per_tonne ?? null,
-    };
-  });
-
   lifecycleStages.forEach((row) => {
-    addTextBox(slide, row.stage, { x: innerX, y: cursorY, width: 36, height: 12 }, { fontSize: 9, bold: true });
-    addTextBox(slide, row.description, { x: innerX + 42, y: cursorY, width: innerWidth - 150, height: 12 }, { fontSize: 8.4, fit: "shrink" });
+    addTextBox(slide, row.stage, { x: innerX, y: cursorY, width: stageColumnWidth, height: 12 }, { fontSize: 9, bold: true });
+    addTextBox(slide, row.description, { x: descriptionX, y: cursorY, width: innerWidth - 164, height: 12 }, { fontSize: 8.4, fit: "shrink" });
     addTextBox(slide, formatNumber(row.total, 2), { x: rect.x + rect.width - 110, y: cursorY, width: 54, height: 12 }, { fontSize: 8.4, align: "right" });
     addTextBox(slide, formatNumber(row.perTonne, 2), { x: rect.x + rect.width - 48, y: cursorY, width: 28, height: 12 }, { fontSize: 8.4, align: "right" });
     cursorY += 14;
   });
 
   cursorY += 4;
-  addTextBox(slide, `A1 factor: ${formatNumber(item.a1Factor ?? null, 2)}`, { x: innerX, y: cursorY, width: innerWidth / 2, height: 12 }, { fontSize: 8.4 });
-  addTextBox(slide, `Recycled: ${formatPercent(item.recycledPct ?? null)}`, { x: innerX + innerWidth / 2, y: cursorY, width: innerWidth / 2, height: 12 }, { fontSize: 8.4, align: "right" });
+  addTextBox(slide, `Recycled: ${formatPercent(item.recycledPct ?? null)}`, { x: innerX, y: cursorY, width: innerWidth, height: 12 }, { fontSize: 8.4, align: "right" });
   cursorY += 18;
 
   const bulletText = item.bullets.slice(0, 3).map((bullet) => `- ${bullet}`).join("\n");

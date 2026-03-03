@@ -1,5 +1,6 @@
 "use client";
 
+import { getStagePerTonneValue } from "@/lib/compare-stage-values";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CompareItem } from "./ScenarioCompareGrid";
 
@@ -23,17 +24,13 @@ type MarkerDefinition = {
 };
 
 const markerDefinitions: MarkerDefinition[] = [
-  { key: "compare-map-A1", stage: "A1", label: "A1" },
-  { key: "compare-map-A2", stage: "A2", label: "A2" },
-  { key: "compare-map-A3", stage: "A3", label: "A3" },
+  { key: "compare-map-A1", stage: "A1-A3", label: "A1-A3" },
   { key: "compare-map-A4", stage: "A4", label: "A4" },
   { key: "compare-map-A5", stage: "A5", label: "A5" },
 ];
 
 const layoutDefaults: Record<string, LabelLayout> = {
   "compare-map-A1": { x: 18, y: 14, scale: 1 },
-  "compare-map-A2": { x: 22, y: 28, scale: 1 },
-  "compare-map-A3": { x: 26, y: 40, scale: 1 },
   "compare-map-A4": { x: 31, y: 54, scale: 1 },
   "compare-map-A5": { x: 32, y: 70, scale: 1 },
 };
@@ -115,17 +112,6 @@ export function ScenarioCompareMap({
   }, [layoutMap]);
 
   const activeItem = items.find((item) => item.id === activeItemId) ?? null;
-
-  const stagePerTonne = useMemo(() => {
-    const map = new Map<string, number | null>();
-    if (!activeItem) return map;
-    activeItem.lifecycle.forEach((stage) => {
-      map.set(stage.stage, stage.kgco2e_per_tonne ?? null);
-    });
-    return map;
-  }, [activeItem]);
-
-  const getStageValue = (stageKey: string) => stagePerTonne.get(stageKey) ?? null;
 
   const handleZoom = (event: React.WheelEvent) => {
     if (reportOnly) return;
@@ -268,7 +254,7 @@ export function ScenarioCompareMap({
             <p className="scheme-kicker">Lifecycle map</p>
             <h2>{activeItem?.title ?? "Scenario map"}</h2>
             <p className="compare-map-meta">
-              Labels show per-stage totals (tCO2e) for the currently selected scenario.
+              Labels show lifecycle values (kgCO2e / t) for the currently selected scenario.
             </p>
           </div>
           <div className="compare-map-actions">
@@ -335,10 +321,9 @@ export function ScenarioCompareMap({
           >
             {markerDefinitions.map((marker) => {
               const layout = layoutState[marker.key] ?? layoutDefaults[marker.key];
-              const value =
-                marker.stage === "A1"
-                  ? activeItem?.a1Factor ?? null
-                  : getStageValue(marker.stage);
+              const value = activeItem
+                ? getStagePerTonneValue(activeItem, marker.stage)
+                : null;
               const digits = 2;
               return (
                 <div
@@ -359,7 +344,7 @@ export function ScenarioCompareMap({
                 >
                   <span
                     className={`compare-map-label-stage ${
-                      marker.stage === "A1" ? "is-a1" : ""
+                      marker.label.length > 3 ? "is-wide" : ""
                     }`}
                   >
                     {marker.label}

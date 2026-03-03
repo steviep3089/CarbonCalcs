@@ -9,6 +9,11 @@ import {
 } from "pdf-lib";
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  getComparisonCardStageRows,
+  getStagePerTonneValue,
+  getStageTotalTonnes as getSharedStageTotalTonnes,
+} from "@/lib/compare-stage-values";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,6 +100,7 @@ export type CompareItem = {
   bullets: string[];
   lifecycle: LifecycleStage[];
   a1Factor?: number | null;
+  deliveredTonnage?: number | null;
   recycledPct?: number | null;
 };
 
@@ -143,9 +149,7 @@ const chartColors = [
 ];
 
 export const mapMarkers = [
-  { key: "compare-map-A1", stage: "A1", label: "A1" },
-  { key: "compare-map-A2", stage: "A2", label: "A2" },
-  { key: "compare-map-A3", stage: "A3", label: "A3" },
+  { key: "compare-map-A1", stage: "A1-A3", label: "A1-A3" },
   { key: "compare-map-A4", stage: "A4", label: "A4" },
   { key: "compare-map-A5", stage: "A5", label: "A5" },
 ] as const;
@@ -154,8 +158,6 @@ const mapMarkerNudges: Record<string, { x?: number; y?: number; scale?: number }
 
 const mapLayoutDefaults: Record<string, LabelLayout> = {
   "compare-map-A1": { x: 18, y: 14, scale: 1 },
-  "compare-map-A2": { x: 22, y: 28, scale: 1 },
-  "compare-map-A3": { x: 26, y: 40, scale: 1 },
   "compare-map-A4": { x: 31, y: 54, scale: 1 },
   "compare-map-A5": { x: 32, y: 70, scale: 1 },
 };
@@ -357,16 +359,7 @@ const fitRect = (
 };
 
 export const getStageTotalTonnes = (item: CompareItem, stage: CompareChartStage) => {
-  const sumStages = (keys: string[]) =>
-    keys.reduce((sum, key) => {
-      const found = item.lifecycle.find((row) => row.stage === key);
-      return sum + (found?.total_kgco2e ?? 0);
-    }, 0) / 1000;
-
-  if (stage === "A1-A3") return sumStages(["A2", "A3"]);
-  if (stage === "A1-A5") return sumStages(["A2", "A3", "A4", "A5"]);
-  const found = item.lifecycle.find((row) => row.stage === stage);
-  return (found?.total_kgco2e ?? 0) / 1000;
+  return getSharedStageTotalTonnes(item, stage) ?? 0;
 };
 
 export const computeSavingPercentage = (items: CompareItem[]) => {
@@ -852,15 +845,9 @@ const drawComparisonCard = (
   );
   cursorY -= infoHeight + 14;
 
-  const lifecycleStages = ["A2", "A3", "A4", "A5"].map((stage) => {
-    const found = item.lifecycle.find((row) => row.stage === stage);
-    return {
-      stage,
-      description: found?.description ?? stage,
-      total: found?.total_kgco2e ?? null,
-      perTonne: found?.kgco2e_per_tonne ?? null,
-    };
-  });
+  const lifecycleStages = getComparisonCardStageRows(item);
+  const stageColumnWidth = 48;
+  const descriptionX = innerX + stageColumnWidth + 8;
 
   const headerY = cursorY;
   page.drawText("Stage", {
@@ -871,7 +858,7 @@ const drawComparisonCard = (
     color: palette.muted,
   });
   page.drawText("Description", {
-    x: innerX + 42,
+    x: descriptionX,
     y: headerY,
     size: 7,
     font: fonts.bold,
@@ -890,9 +877,14 @@ const drawComparisonCard = (
       color: palette.text,
     });
     page.drawText(
-      truncateText(row.description, fonts.regular, 8.5, rect.x + rect.width - 160 - (innerX + 42)),
+      truncateText(
+        row.description,
+        fonts.regular,
+        8.5,
+        rect.x + rect.width - 160 - descriptionX
+      ),
       {
-        x: innerX + 42,
+        x: descriptionX,
         y: cursorY,
         size: 8.5,
         font: fonts.regular,
@@ -913,13 +905,6 @@ const drawComparisonCard = (
   });
 
   cursorY -= 6;
-  page.drawText(`A1 factor: ${formatNumber(item.a1Factor ?? null, 2)}`, {
-    x: innerX,
-    y: cursorY,
-    size: 8.5,
-    font: fonts.regular,
-    color: palette.text,
-  });
   drawRightText(
     page,
     `Recycled: ${formatPercent(item.recycledPct ?? null)}`,
@@ -1000,8 +985,7 @@ const drawCardsPages = (
 };
 
 export const getMapStageValue = (item: CompareItem, stageKey: string) => {
-  if (stageKey === "A1") return item.a1Factor ?? null;
-  return item.lifecycle.find((row) => row.stage === stageKey)?.kgco2e_per_tonne ?? null;
+  return getStagePerTonneValue(item, stageKey);
 };
 
 const drawMapPage = (
@@ -1647,6 +1631,12 @@ export const loadCompareData = async (
     return total / factorByProduct.size;
   };
 
+  const computeDeliveredTonnage = (productsList: Snapshot["scheme_products"] = []) =>
+    productsList.reduce((sum, row) => {
+      const isDelivery = (row.delivery_type ?? "delivery").toLowerCase() === "delivery";
+      return isDelivery ? sum + (toNumber(row.tonnage) ?? 0) : sum;
+    }, 0);
+
   const computeRecycledPct = (productsList: Snapshot["scheme_products"] = []) => {
     let weightedTotal = 0;
     let totalTonnage = 0;
@@ -1677,6 +1667,7 @@ export const loadCompareData = async (
       bullets: buildBullets(livePayload.products, livePayload.install, unit),
       lifecycle: buildLifecycle(livePayload.results),
       a1Factor: computeA1Factor(livePayload.products),
+      deliveredTonnage: computeDeliveredTonnage(livePayload.products),
       recycledPct: computeRecycledPct(livePayload.products),
     });
   }
@@ -1706,6 +1697,7 @@ export const loadCompareData = async (
       ),
       lifecycle: buildLifecycle(snapshot.scheme_carbon_results ?? []),
       a1Factor: computeA1Factor(snapshot.scheme_products ?? []),
+      deliveredTonnage: computeDeliveredTonnage(snapshot.scheme_products ?? []),
       recycledPct: computeRecycledPct(snapshot.scheme_products ?? []),
     });
   });
