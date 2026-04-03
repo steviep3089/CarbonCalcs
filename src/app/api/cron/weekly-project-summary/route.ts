@@ -131,11 +131,12 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const force = url.searchParams.get("force") === "1";
+  const isVercelCronRequest = request.headers.has("x-vercel-cron");
   const now = new Date();
   const nowParts = getZonedParts(now, summaryTimeZone);
   const inWindow = nowParts.weekday.toLowerCase().startsWith("mon") && nowParts.hour === summaryHour;
 
-  if (!force && !inWindow) {
+  if (!force && !isVercelCronRequest && !inWindow) {
     return Response.json({
       skipped: true,
       reason: `Outside scheduled window (${summaryTimeZone} Monday ${summaryHour}:00).`,
