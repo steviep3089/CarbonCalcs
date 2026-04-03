@@ -152,6 +152,7 @@ type Actions = {
   createMaterialMapping: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   uploadMaterialMappings: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   inviteUser: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
+  sendWeeklyProjectSummaryTest: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   saveUserReportPreferences: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   createReportMetric: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   updateReportMetric: (formData: FormData) => Promise<void>;
@@ -2329,6 +2330,10 @@ function UserAccessTab({
   userReportPreferences: UserReportPreferences;
 }) {
   const [inviteState, inviteAction] = useActionState(actions.inviteUser, {});
+  const [weeklySummaryState, weeklySummaryAction] = useActionState(
+    actions.sendWeeklyProjectSummaryTest,
+    {}
+  );
   const [preferencesState, preferencesAction] = useActionState(
     actions.saveUserReportPreferences,
     {}
@@ -2356,6 +2361,31 @@ function UserAccessTab({
           {inviteState?.success ? (
             <p className="create-scheme-message success">
               {inviteState.message ?? "Invitation sent."}
+            </p>
+          ) : null}
+        </form>
+      </section>
+
+      <section className="scheme-card">
+        <div className="scheme-card-header">
+          <h2>Weekly project summary test</h2>
+          <p className="scheme-card-subtitle">
+            Send the weekly Monday summary email now to verify recipients and delivery.
+          </p>
+        </div>
+        <form action={weeklySummaryAction} className="admin-create">
+          <div className="admin-form-row">
+            <span />
+            <button className="btn-primary" type="submit">
+              Send test weekly summary now
+            </button>
+          </div>
+          {weeklySummaryState?.error ? (
+            <p className="create-scheme-message error">{weeklySummaryState.error}</p>
+          ) : null}
+          {weeklySummaryState?.success ? (
+            <p className="create-scheme-message success">
+              {weeklySummaryState.message ?? "Weekly summary test sent."}
             </p>
           ) : null}
         </form>

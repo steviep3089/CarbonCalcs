@@ -155,6 +155,59 @@ export async function saveUserReportPreferences(
   return { success: true, message: "Report defaults saved." };
 }
 
+export async function sendWeeklyProjectSummaryTest(
+  _prevState: ActionState,
+  _formData: FormData
+): Promise<ActionState> {
+  await requireUser();
+
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return { error: "Missing CRON_SECRET environment variable." };
+  }
+
+  const baseUrl = getConfiguredBaseUrl() ?? (await getBaseUrl());
+  const url = new URL("/api/cron/weekly-project-summary?force=1", baseUrl).toString();
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${cronSecret}`,
+    },
+    cache: "no-store",
+  });
+
+  let payload: unknown = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === "object" && "error" in payload
+        ? String((payload as { error?: unknown }).error)
+        : `Weekly summary test failed (${response.status}).`;
+    return { error: message };
+  }
+
+  const info = payload as
+    | {
+        accepted?: string[];
+        projectCount?: number;
+      }
+    | null;
+
+  const recipientCount = info?.accepted?.length ?? 0;
+  const projectCount = info?.projectCount ?? 0;
+
+  return {
+    success: true,
+    message: `Weekly summary test sent to ${recipientCount} recipient(s) with ${projectCount} project(s).`,
+  };
+}
+
 export async function createPlant(
   _prevState: ActionState,
   formData: FormData

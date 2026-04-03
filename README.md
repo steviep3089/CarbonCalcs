@@ -20,6 +20,37 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Weekly Monday Project Summary Email
+
+This portal includes a cron endpoint at `/api/cron/weekly-project-summary` that sends a weekly email with every project and its latest `kgCO2e/t` value.
+
+### Schedule
+
+- `vercel.json` schedules the route every Monday hour (`0 * * * 1`) in UTC.
+- The route only sends when the configured local time window is reached (default: Monday 08:00 in `Europe/London`).
+
+### Required Environment Variables
+
+- `CRON_SECRET` (required): shared secret for cron auth (`Authorization: Bearer <CRON_SECRET>`)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (required): SMTP config
+- `SMTP_FROM_NAME` (optional): sender display name
+- `SUPABASE_SERVICE_ROLE_KEY` (required): used to query all schemes/summaries from cron route
+- `NEXT_PUBLIC_SUPABASE_URL` (required): Supabase project URL
+
+### Optional Environment Variables
+
+- `WEEKLY_PROJECT_SUMMARY_TO`: comma/semicolon-separated recipient list. If omitted, recipients are pulled from `user_report_preferences.default_report_email`.
+- `WEEKLY_PROJECT_SUMMARY_TZ`: timezone for send window check (default: `Europe/London`)
+- `WEEKLY_PROJECT_SUMMARY_HOUR`: local hour for send window check (default: `8`)
+- `NEXT_PUBLIC_SITE_URL` or `NEXT_PUBLIC_APP_URL`: used to include a link back to `/schemes` in the email
+
+### Manual Test
+
+Call the route manually with:
+
+- `GET /api/cron/weekly-project-summary?force=1`
+- Header: `Authorization: Bearer <CRON_SECRET>`
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
