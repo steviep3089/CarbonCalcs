@@ -178,9 +178,11 @@ export async function sendWeeklyProjectSummaryTest(
     cache: "no-store",
   });
 
+  const rawBody = await response.text();
+
   let payload: unknown = null;
   try {
-    payload = await response.json();
+    payload = rawBody ? (JSON.parse(rawBody) as unknown) : null;
   } catch {
     payload = null;
   }
@@ -189,6 +191,8 @@ export async function sendWeeklyProjectSummaryTest(
     const message =
       payload && typeof payload === "object" && "error" in payload
         ? String((payload as { error?: unknown }).error)
+        : rawBody.trim()
+          ? rawBody.trim()
         : `Weekly summary test failed (${response.status}).`;
     return { error: message };
   }
