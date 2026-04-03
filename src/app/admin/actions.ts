@@ -173,6 +173,7 @@ export async function sendWeeklyProjectSummaryTest(
     method: "GET",
     headers: {
       Authorization: `Bearer ${cronSecret}`,
+      "x-vercel-cron": "admin-manual-test",
     },
     cache: "no-store",
   });
@@ -194,10 +195,28 @@ export async function sendWeeklyProjectSummaryTest(
 
   const info = payload as
     | {
+        success?: boolean;
+        skipped?: boolean;
+        reason?: string;
         accepted?: string[];
         projectCount?: number;
       }
     | null;
+
+  if (info?.skipped) {
+    return {
+      error:
+        info.reason ??
+        "Weekly summary run was skipped. Check schedule/time window configuration.",
+    };
+  }
+
+  if (!info?.success || !Array.isArray(info.accepted)) {
+    return {
+      error:
+        "Weekly summary test returned an unexpected response. Check cron route logs in Vercel.",
+    };
+  }
 
   const recipientCount = info?.accepted?.length ?? 0;
   const projectCount = info?.projectCount ?? 0;
