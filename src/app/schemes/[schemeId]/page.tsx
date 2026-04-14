@@ -12,6 +12,7 @@ import {
   enableAutoMaterials,
   enableManualMaterials,
   updateSchemeMaterialUsage,
+  updateSchemePostcodes,
   setSchemeDistanceUnitKm,
   setSchemeDistanceUnitMi,
   createSchemeScenario,
@@ -566,6 +567,33 @@ export default async function SchemeDetailPage({ params }: PageProps) {
               </button>
             </form>
           ) : null}
+          <form
+            action={updateSchemePostcodes.bind(null, schemeId)}
+            className="scheme-postcode-form"
+          >
+            <label>
+              Site postcode
+              <input
+                name="site_postcode"
+                defaultValue={scheme?.site_postcode ?? ""}
+                placeholder="e.g. LE16 1TL"
+                disabled={isLocked}
+              />
+            </label>
+            <label>
+              Base postcode
+              <input
+                name="base_postcode"
+                defaultValue={scheme?.base_postcode ?? ""}
+                placeholder="e.g. LE16 7QX"
+                disabled={isLocked}
+              />
+            </label>
+            <button className="btn-secondary" type="submit" disabled={isLocked}>
+              Save postcodes
+            </button>
+          </form>
+          <p className="scheme-muted">Used by A5 Auto distance calculation.</p>
         </div>
         <div className="scheme-actions">
           <div className="scheme-distance-toggle">

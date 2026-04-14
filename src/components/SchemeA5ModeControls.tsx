@@ -36,6 +36,8 @@ export function SchemeA5ModeControls({
     async () => enableManualA5Usage(schemeId),
     {}
   );
+  const autoError = autoState?.error ?? "";
+  const showPostcodeHelp = /postcode/i.test(autoError);
 
   useEffect(() => {
     if (autoState?.ok) {
@@ -90,6 +92,17 @@ export function SchemeA5ModeControls({
       {manualState?.ok ? (
         <p className="create-scheme-message success">Manual logging enabled.</p>
       ) : null}
+      {autoError ? (
+        <p className="create-scheme-message error">{autoError}</p>
+      ) : null}
+      {showPostcodeHelp ? (
+        <p className="scheme-muted">
+          Auto mode needs valid UK postcodes for both Base and Site. Update those values in the scheme summary, or switch to Manual mode and enter distance directly.
+        </p>
+      ) : null}
+      {autoState?.ok ? (
+        <p className="create-scheme-message success">Auto usage applied.</p>
+      ) : null}
 
       {showAutoModal && !hasA5Postcodes ? (
         <div className="admin-modal">
@@ -111,9 +124,6 @@ export function SchemeA5ModeControls({
                   onChange={(event) => setDistanceValue(event.target.value)}
                 />
               </label>
-              {autoState?.error ? (
-                <p className="create-scheme-message error">{autoState.error}</p>
-              ) : null}
               <div className="admin-modal-actions">
                 <button className="btn-primary" type="submit">
                   Update distance

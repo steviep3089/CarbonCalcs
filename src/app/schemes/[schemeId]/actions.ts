@@ -5,6 +5,27 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const MILES_TO_KM = 1.60934;
 
+const describeError = (error: unknown) => {
+  if (!error || typeof error !== "object") {
+    return "Unknown error";
+  }
+  const maybe = error as {
+    message?: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+  };
+  const parts = [maybe.message ?? "Unknown error"];
+  if (maybe.code) parts.push(`code=${maybe.code}`);
+  if (maybe.details) parts.push(`details=${maybe.details}`);
+  if (maybe.hint) parts.push(`hint=${maybe.hint}`);
+  return parts.join(" | ");
+};
+
+const logActionError = (action: string, step: string, error: unknown) => {
+  console.error(`[${action}] ${step} failed`, error);
+};
+
 const normalizeDistanceUnit = (unit: string | null | undefined) =>
   (unit ?? "km").toLowerCase() === "mi" ? "mi" : "km";
 
@@ -472,6 +493,46 @@ export async function updateSchemeSitePostcode(
 
   revalidatePath(`/schemes/${schemeId}`);
   return { ok: true };
+}
+
+export async function updateSchemePostcodes(
+  schemeId: string,
+  formData: FormData
+): Promise<void> {
+  if (!schemeId) {
+    throw new Error("No schemeId provided");
+  }
+
+  const site_postcode =
+    (formData.get("site_postcode") as string | null)?.trim() ?? "";
+  const base_postcode =
+    (formData.get("base_postcode") as string | null)?.trim() ?? "";
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("Unauthorized");
+  }
+
+  const { error } = await supabase
+    .from("schemes")
+    .update({
+      site_postcode: site_postcode || null,
+      base_postcode: base_postcode || null,
+    })
+    .eq("id", schemeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath(`/schemes/${schemeId}`);
+  revalidatePath("/schemes");
+  return;
 }
 
 export async function recalculateSchemeCarbon(schemeId: string) {
@@ -1751,11 +1812,16 @@ export async function applyA5AutoUsage(
       .single();
 
     if (schemeError) {
+      logActionError("A5 auto", "fetch scheme postcodes", schemeError);
       return { ok: false, error: schemeError.message };
     }
 
-    const basePostcode = normalizePostcode(schemeRow?.base_postcode);
-    const sitePostcode = normalizePostcode(schemeRow?.site_postcode);
+    const rawBasePostcode = (schemeRow?.base_postcode ?? "").trim();
+    const rawSitePostcode = (schemeRow?.site_postcode ?? "").trim();
+    const basePostcode =
+      extractLikelyUkPostcode(rawBasePostcode) ?? normalizePostcode(rawBasePostcode);
+    const sitePostcode =
+      extractLikelyUkPostcode(rawSitePostcode) ?? normalizePostcode(rawSitePostcode);
 
     if (!basePostcode || !sitePostcode) {
       return {
@@ -1764,18 +1830,36 @@ export async function applyA5AutoUsage(
       };
     }
 
+    const [resolvedBasePostcode, resolvedSitePostcode] = await Promise.all([
+      resolvePostcode(basePostcode),
+      resolvePostcode(sitePostcode),
+    ]);
+
+    if (!resolvedBasePostcode) {
+      return {
+        ok: false,
+        error: `Base postcode not found: ${rawBasePostcode}`,
+      };
+    }
+
+    if (!resolvedSitePostcode) {
+      return {
+        ok: false,
+        error: `Site postcode not found: ${rawSitePostcode}`,
+      };
+    }
+
     try {
       distance_km_each_way = await getPostcodeDistanceKm(
-        basePostcode,
-        sitePostcode
+        resolvedBasePostcode,
+        resolvedSitePostcode
       );
     } catch (error) {
+      logActionError("A5 auto", "calculate postcode distance", error);
       return {
         ok: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Unable to calculate distance from postcodes.",
+          "Could not calculate distance from postcodes. Check base/site postcodes, or switch to Manual mode.",
       };
     }
   }
@@ -1787,6 +1871,7 @@ export async function applyA5AutoUsage(
     .ilike("category", "transport");
 
   if (transportError) {
+    logActionError("A5 auto", "fetch transport items", transportError);
     return { ok: false, error: transportError.message };
   }
 
@@ -1801,6 +1886,7 @@ export async function applyA5AutoUsage(
       .in("scheme_installation_item_id", transportIds);
 
     if (deleteError) {
+      logActionError("A5 auto", "delete existing transport usage", deleteError);
       return { ok: false, error: deleteError.message };
     }
 
@@ -1820,6 +1906,7 @@ export async function applyA5AutoUsage(
       .insert(transportRows);
 
     if (insertError) {
+      logActionError("A5 auto", "insert auto transport usage", insertError);
       return { ok: false, error: insertError.message };
     }
   }
@@ -1830,11 +1917,13 @@ export async function applyA5AutoUsage(
     .eq("id", schemeId);
 
   if (modeError) {
+    logActionError("A5 auto", "set mode auto", modeError);
     return { ok: false, error: modeError.message };
   }
 
   const fuelResult = await autoCalculateA5PlantUsage(schemeId);
   if (fuelResult && fuelResult.ok === false) {
+    logActionError("A5 auto", "auto-calculate plant usage", fuelResult.error);
     return fuelResult;
   }
 
@@ -1874,7 +1963,11 @@ export async function enableManualA5Usage(schemeId: string) {
         plantItems.map((item) => item.id)
       );
     if (deleteError) {
-      return { ok: false, error: deleteError.message };
+      logActionError("A5 manual", "delete auto-generated plant usage", deleteError);
+      return {
+        ok: false,
+        error: `Failed deleting auto plant usage: ${describeError(deleteError)}`,
+      };
     }
   }
 
@@ -1884,7 +1977,29 @@ export async function enableManualA5Usage(schemeId: string) {
     .eq("id", schemeId);
 
   if (modeError) {
-    return { ok: false, error: modeError.message };
+    logActionError("A5 manual", "set mode manual", modeError);
+    return {
+      ok: false,
+      error: `Failed setting manual mode: ${describeError(modeError)}`,
+    };
+  }
+
+  const { count: productCount, error: productCountError } = await supabase
+    .from("scheme_products")
+    .select("id", { count: "exact", head: true })
+    .eq("scheme_id", schemeId);
+
+  if (productCountError) {
+    logActionError("A5 manual", "count scheme products", productCountError);
+    return {
+      ok: false,
+      error: `Failed checking products before recalc: ${describeError(productCountError)}`,
+    };
+  }
+
+  if ((productCount ?? 0) === 0) {
+    revalidatePath(`/schemes/${schemeId}`);
+    return { ok: true };
   }
 
   const { error: recalcError } = await supabase.rpc("calculate_scheme_carbon", {
@@ -1892,7 +2007,11 @@ export async function enableManualA5Usage(schemeId: string) {
   });
 
   if (recalcError) {
-    return { ok: false, error: recalcError.message };
+    logActionError("A5 manual", "calculate_scheme_carbon", recalcError);
+    return {
+      ok: false,
+      error: `Failed recalculating scheme carbon: ${describeError(recalcError)}`,
+    };
   }
 
   revalidatePath(`/schemes/${schemeId}`);
