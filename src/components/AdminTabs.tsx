@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type FormEvent } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition, type ComponentPropsWithoutRef, type ReactNode, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import type { AdminAccessRole } from "@/lib/admin-access";
 
 type Plant = {
   id: string;
@@ -135,9 +136,11 @@ type ActionResponse = {
 type Actions = {
   createPlant: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   updatePlant: (formData: FormData) => Promise<void>;
+  deletePlant: (formData: FormData) => Promise<ActionResponse>;
   createPlantMixFactor: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   updatePlantMixFactor: (formData: FormData) => Promise<void>;
   setPlantMixDefault: (formData: FormData) => Promise<void>;
+  deletePlantMixFactor: (formData: FormData) => Promise<ActionResponse>;
   createTransportMode: (prevState: ActionResponse, formData: FormData) => Promise<ActionResponse>;
   updateTransportMode: (formData: FormData) => Promise<void>;
   deleteTransportMode: (formData: FormData) => Promise<void>;
@@ -178,6 +181,8 @@ type AdminTabsProps = {
   ghgCategories: GhgCategory[];
   ghgFilters: GhgFactorFilter[];
   userReportPreferences: UserReportPreferences;
+  currentUserRole: AdminAccessRole;
+  canManageAdmin: boolean;
   actions: Actions;
 };
 
@@ -186,6 +191,20 @@ type TabItem = {
   label: string;
   content: ReactNode;
 };
+
+function MutationForm({
+  canManage,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<"form"> & { canManage: boolean }) {
+  return (
+    <form {...props}>
+      <fieldset className="admin-readonly-fieldset" disabled={!canManage}>
+        {children}
+      </fieldset>
+    </form>
+  );
+}
 
 export function AdminTabs({
   plants,
@@ -198,6 +217,8 @@ export function AdminTabs({
   ghgCategories,
   ghgFilters,
   userReportPreferences,
+  currentUserRole,
+  canManageAdmin,
   actions,
 }: AdminTabsProps) {
   const [active, setActive] = useState("plants");
@@ -211,6 +232,7 @@ export function AdminTabs({
         <ManufacturingTab
           plants={plants}
           plantMixFactors={plantMixFactors}
+          canManageAdmin={canManageAdmin}
           actions={actions}
         />
       ),
@@ -219,7 +241,11 @@ export function AdminTabs({
       id: "logistics",
       label: "Logistics",
       content: (
-        <LogisticsTab transportModes={transportModes} actions={actions} />
+        <LogisticsTab
+          transportModes={transportModes}
+          canManageAdmin={canManageAdmin}
+          actions={actions}
+        />
       ),
     },
     {
@@ -230,6 +256,7 @@ export function AdminTabs({
           mixTypes={mixTypes}
           products={products}
           plants={plants}
+          canManageAdmin={canManageAdmin}
           actions={actions}
         />
       ),
@@ -240,6 +267,7 @@ export function AdminTabs({
       content: (
         <InstallationTab
           installationSetups={installationSetups}
+          canManageAdmin={canManageAdmin}
           actions={actions}
         />
       ),
@@ -251,6 +279,7 @@ export function AdminTabs({
         <ConversionFactorsTab
           categories={ghgCategories}
           filters={ghgFilters}
+          canManageAdmin={canManageAdmin}
           actions={actions}
         />
       ),
@@ -259,7 +288,11 @@ export function AdminTabs({
       id: "reports",
       label: "Reports",
       content: (
-        <ReportsTab reportMetrics={reportMetrics} actions={actions} />
+        <ReportsTab
+          reportMetrics={reportMetrics}
+          canManageAdmin={canManageAdmin}
+          actions={actions}
+        />
       ),
       },
       {
@@ -269,6 +302,8 @@ export function AdminTabs({
             <UserAccessTab
               actions={actions}
               userReportPreferences={userReportPreferences}
+              currentUserRole={currentUserRole}
+              canManageAdmin={canManageAdmin}
             />
           ),
         },
@@ -284,6 +319,15 @@ export function AdminTabs({
 
   return (
     <section className="admin-tabs">
+      {!canManageAdmin ? (
+        <div className="scheme-card admin-readonly-banner">
+          <h2>Read-only access</h2>
+          <p className="scheme-card-subtitle">
+            You are signed in as a User. Admin reference data can be viewed, but only
+            Admin users can change it.
+          </p>
+        </div>
+      ) : null}
       <div className="admin-tab-list">
         {tabs.map((tab) => (
           <button
@@ -307,14 +351,24 @@ export function AdminTabs({
 function ManufacturingTab({
   plants,
   plantMixFactors,
+  canManageAdmin,
   actions,
 }: {
   plants: Plant[];
   plantMixFactors: PlantMixFactor[];
+  canManageAdmin: boolean;
   actions: Actions;
 }) {
   const [createPlantState, createPlantAction] = useActionState(actions.createPlant, {});
   const [uploadPlantsState, uploadPlantsAction] = useActionState(actions.uploadPlants, {});
+  const [deletePlantState, deletePlantAction] = useActionState(
+    async (_prev: ActionResponse, formData: FormData) => actions.deletePlant(formData),
+    {}
+  );
+  const [deletePlantMixFactorState, deletePlantMixFactorAction] = useActionState(
+    async (_prev: ActionResponse, formData: FormData) => actions.deletePlantMixFactor(formData),
+    {}
+  );
   const [showModal, setShowModal] = useState(false);
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null);
   const [editingPlantId, setEditingPlantId] = useState<string | null>(null);
@@ -326,6 +380,19 @@ function ManufacturingTab({
       setShowModal(false);
     }
   }, [createPlantState]);
+
+  useEffect(() => {
+    if (deletePlantState?.success) {
+      setSelectedPlantId(null);
+      setEditingPlantId(null);
+    }
+  }, [deletePlantState]);
+
+  useEffect(() => {
+    if (deletePlantMixFactorState?.success) {
+      setEditingFactorId(null);
+    }
+  }, [deletePlantMixFactorState]);
 
 
   const plantFactors = useMemo(() => {
@@ -349,7 +416,7 @@ function ManufacturingTab({
             </p>
           </div>
           <div className="admin-header-actions">
-            <form action={uploadPlantsAction} className="admin-upload">
+            <MutationForm canManage={canManageAdmin} action={uploadPlantsAction} className="admin-upload">
               <input name="file" type="file" accept=".csv" />
               <a
                 className="btn-secondary"
@@ -368,8 +435,13 @@ function ManufacturingTab({
               <button className="btn-primary" type="submit">
                 Upload
               </button>
-            </form>
-            <button className="btn-primary" type="button" onClick={() => setShowModal(true)}>
+            </MutationForm>
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={!canManageAdmin}
+              onClick={() => setShowModal(true)}
+            >
               Add plant
             </button>
           </div>
@@ -381,6 +453,22 @@ function ManufacturingTab({
         {uploadPlantsState?.success ? (
           <p className="create-scheme-message success">
             Uploaded {uploadPlantsState.count ?? 0} rows.
+          </p>
+        ) : null}
+        {deletePlantState?.error ? (
+          <p className="create-scheme-message error">{deletePlantState.error}</p>
+        ) : null}
+        {deletePlantState?.success ? (
+          <p className="create-scheme-message success">
+            {deletePlantState.message ?? "Plant deleted."}
+          </p>
+        ) : null}
+        {deletePlantMixFactorState?.error ? (
+          <p className="create-scheme-message error">{deletePlantMixFactorState.error}</p>
+        ) : null}
+        {deletePlantMixFactorState?.success ? (
+          <p className="create-scheme-message success">
+            {deletePlantMixFactorState.message ?? "Material mapping deleted."}
           </p>
         ) : null}
 
@@ -413,17 +501,36 @@ function ManufacturingTab({
                   {plant.description ? <span>{plant.description}</span> : null}
                   {plant.is_default ? <span className="scheme-muted">Default</span> : null}
                 </div>
-                <button
-                  type="button"
-                  className="plant-card-edit-badge"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedPlantId(plant.id);
-                    setEditingPlantId(plant.id);
-                  }}
-                >
-                  Edit
-                </button>
+                {canManageAdmin ? (
+                  <MutationForm
+                    canManage={canManageAdmin}
+                    action={deletePlantAction}
+                    className="plant-card-delete-form"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <input type="hidden" name="id" value={plant.id} />
+                    <button
+                      type="submit"
+                      className="delete-button plant-card-delete-badge"
+                      title={`Delete ${plant.name}`}
+                    >
+                      X
+                    </button>
+                  </MutationForm>
+                ) : null}
+                {canManageAdmin ? (
+                  <button
+                    type="button"
+                    className="plant-card-edit-badge"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedPlantId(plant.id);
+                      setEditingPlantId(plant.id);
+                    }}
+                  >
+                    Edit
+                  </button>
+                ) : null}
               </div>
             );
           })}
@@ -432,7 +539,8 @@ function ManufacturingTab({
         {selectedPlantId ? (
           <div className="plant-detail">
             {selectedPlant && editingPlantId === selectedPlant.id ? (
-              <form
+              <MutationForm
+                canManage={canManageAdmin}
                 key={selectedPlant.id}
                 action={actions.updatePlant}
                 className="plant-default-form"
@@ -492,7 +600,7 @@ function ManufacturingTab({
                     Cancel
                   </button>
                 </div>
-              </form>
+              </MutationForm>
             ) : null}
             <h3 className="display-text">Assigned mixes & products</h3>
             <div className="plant-factor-list">
@@ -503,14 +611,17 @@ function ManufacturingTab({
                     className={`plant-factor-item ${
                       editingFactorId === row.id ? "is-editing" : ""
                     }`}
-                    role="button"
-                    tabIndex={0}
+                    role={canManageAdmin ? "button" : undefined}
+                    tabIndex={canManageAdmin ? 0 : -1}
                     onClick={() =>
-                      setEditingFactorId((current) =>
-                        current === row.id ? null : row.id
-                      )
+                      canManageAdmin
+                        ? setEditingFactorId((current) =>
+                            current === row.id ? null : row.id
+                          )
+                        : undefined
                     }
                     onKeyDown={(event) => {
+                      if (!canManageAdmin) return;
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
                         setEditingFactorId((current) =>
@@ -520,7 +631,8 @@ function ManufacturingTab({
                     }}
                   >
                     {editingFactorId === row.id ? (
-                      <form
+                      <MutationForm
+                        canManage={canManageAdmin}
                         action={actions.updatePlantMixFactor}
                         className="plant-factor-edit"
                         onClick={(event) => event.stopPropagation()}
@@ -590,7 +702,7 @@ function ManufacturingTab({
                             Cancel
                           </button>
                         </div>
-                      </form>
+                      </MutationForm>
                     ) : (
                       <>
                         <div>
@@ -607,7 +719,24 @@ function ManufacturingTab({
                             <span className="scheme-muted">Default</span>
                           ) : null}
                         </div>
-                        <form
+                        {canManageAdmin ? (
+                          <MutationForm
+                            canManage={canManageAdmin}
+                            action={deletePlantMixFactorAction}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <input type="hidden" name="id" value={row.id} />
+                            <button
+                              className="delete-button"
+                              type="submit"
+                              title="Delete material mapping"
+                            >
+                              X
+                            </button>
+                          </MutationForm>
+                        ) : null}
+                        <MutationForm
+                          canManage={canManageAdmin}
                           action={actions.setPlantMixDefault}
                           onClick={(event) => event.stopPropagation()}
                         >
@@ -620,7 +749,7 @@ function ManufacturingTab({
                           >
                             {row.is_default ? "Default" : "Set default"}
                           </button>
-                        </form>
+                        </MutationForm>
                       </>
                     )}
                   </div>
@@ -635,12 +764,12 @@ function ManufacturingTab({
         )}
       </section>
 
-      {showModal ? (
+      {showModal && canManageAdmin ? (
         <div className="admin-modal">
           <div className="admin-modal-card">
             <h3 className="display-text">Add plant</h3>
             <p className="scheme-card-subtitle">Enter the plant details below.</p>
-            <form action={createPlantAction} className="admin-modal-form">
+            <MutationForm canManage={canManageAdmin} action={createPlantAction} className="admin-modal-form">
               <label>
                 Plant name
                 <input name="name" placeholder="Plant name" />
@@ -668,7 +797,7 @@ function ManufacturingTab({
               {createPlantState?.error ? (
                 <p className="create-scheme-message error">{createPlantState.error}</p>
               ) : null}
-            </form>
+            </MutationForm>
           </div>
         </div>
       ) : null}
@@ -678,9 +807,11 @@ function ManufacturingTab({
 
 function LogisticsTab({
   transportModes,
+  canManageAdmin,
   actions,
 }: {
   transportModes: TransportMode[];
+  canManageAdmin: boolean;
   actions: Actions;
 }) {
   const milesToKm = 1.60934;
@@ -712,7 +843,11 @@ function LogisticsTab({
           {transportModes.map((mode) => (
             <tr key={mode.id}>
               <td colSpan={5}>
-                <form action={actions.updateTransportMode} className="admin-row-form admin-logistics-grid">
+                <MutationForm
+                  canManage={canManageAdmin}
+                  action={actions.updateTransportMode}
+                  className="admin-row-form admin-logistics-grid"
+                >
                   <input type="hidden" name="original_id" value={mode.id} />
                   <button
                     className="delete-button"
@@ -757,14 +892,14 @@ function LogisticsTab({
                   <button className="btn-secondary" type="submit">
                     Update
                   </button>
-                </form>
+                </MutationForm>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <form action={createTransportAction} className="admin-create">
+      <MutationForm canManage={canManageAdmin} action={createTransportAction} className="admin-create">
         <h3 className="display-text">Add transport mode</h3>
         <div className="admin-form-row">
           <input name="id" placeholder="Id (e.g. ARTIC)" />
@@ -795,7 +930,7 @@ function LogisticsTab({
         {createTransportState?.success ? (
           <p className="create-scheme-message success">Transport mode added.</p>
         ) : null}
-      </form>
+      </MutationForm>
     </section>
   );
 }
@@ -804,11 +939,13 @@ function MaterialCreationTab({
   mixTypes,
   products,
   plants,
+  canManageAdmin,
   actions,
 }: {
   mixTypes: MixType[];
   products: Product[];
   plants: Plant[];
+  canManageAdmin: boolean;
   actions: Actions;
 }) {
   const [createMappingState, createMappingAction] = useActionState(
@@ -916,7 +1053,7 @@ function MaterialCreationTab({
             Assign mix types and products to selected plants.
           </p>
         </div>
-        <form action={uploadMaterialsAction} className="admin-upload">
+        <MutationForm canManage={canManageAdmin} action={uploadMaterialsAction} className="admin-upload">
           <input name="file" type="file" accept=".csv" />
           <a
             className="btn-secondary"
@@ -935,7 +1072,7 @@ function MaterialCreationTab({
           <button className="btn-primary" type="submit">
             Upload
           </button>
-        </form>
+        </MutationForm>
       </div>
 
       {uploadMaterialsState?.error ? (
@@ -947,7 +1084,7 @@ function MaterialCreationTab({
         </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="material-form">
+      <MutationForm canManage={canManageAdmin} onSubmit={handleSubmit} className="material-form">
         <div className="material-field">
           <label>Plants</label>
           <details className="material-dropdown">
@@ -1093,7 +1230,7 @@ function MaterialCreationTab({
             Created {createMappingState.count ?? 0} mapping(s).
           </p>
         ) : null}
-      </form>
+      </MutationForm>
 
       {showOverwriteModal && createMappingState?.matches?.length ? (
         <div className="admin-modal">
@@ -1146,7 +1283,12 @@ function MaterialCreationTab({
               ))}
             </div>
             <div className="admin-modal-actions">
-              <button className="btn-primary" type="button" onClick={handleOverwrite}>
+              <button
+                className="btn-primary"
+                type="button"
+                disabled={!canManageAdmin}
+                onClick={handleOverwrite}
+              >
                 Overwrite selected
               </button>
               <button className="btn-secondary" type="button" onClick={() => setShowOverwriteModal(false)}>
@@ -1162,9 +1304,11 @@ function MaterialCreationTab({
 
 function InstallationTab({
   installationSetups,
+  canManageAdmin,
   actions,
 }: {
   installationSetups: InstallationSetup[];
+  canManageAdmin: boolean;
   actions: Actions;
 }) {
   const milesToKm = 1.60934;
@@ -1253,7 +1397,7 @@ function InstallationTab({
           </select>
         </div>
         <div className="admin-header-actions">
-          <form action={uploadAction} className="admin-upload">
+          <MutationForm canManage={canManageAdmin} action={uploadAction} className="admin-upload">
             <input name="file" type="file" accept=".csv" />
             <a
               className="btn-secondary"
@@ -1272,12 +1416,12 @@ function InstallationTab({
             <button className="btn-primary" type="submit">
               Upload
             </button>
-          </form>
+          </MutationForm>
           <button
             type="button"
             className="btn-secondary"
             onClick={handleBulkSave}
-            disabled={isBulkPending || filtered.length === 0}
+            disabled={!canManageAdmin || isBulkPending || filtered.length === 0}
           >
             Save all changes
           </button>
@@ -1329,7 +1473,8 @@ function InstallationTab({
             {filtered.map((row) => (
               <tr key={row.id}>
                 <td colSpan={9}>
-                  <form
+                  <MutationForm
+                    canManage={canManageAdmin}
                     action={actions.updateInstallationSetup}
                     className="admin-row-form admin-install-grid"
                     data-install-id={row.id}
@@ -1414,7 +1559,7 @@ function InstallationTab({
                     <button className="btn-secondary" type="submit">
                       Update
                     </button>
-                  </form>
+                  </MutationForm>
                 </td>
               </tr>
             ))}
@@ -1422,7 +1567,7 @@ function InstallationTab({
         </table>
       </div>
 
-      <form action={createInstallAction} className="admin-create">
+      <MutationForm canManage={canManageAdmin} action={createInstallAction} className="admin-create">
         <h3 className="display-text">Add installation setup</h3>
         <div className="admin-form-row admin-install-grid">
           <input
@@ -1486,7 +1631,7 @@ function InstallationTab({
         {createInstallState?.success ? (
           <p className="create-scheme-message success">Installation setup added.</p>
         ) : null}
-      </form>
+      </MutationForm>
     </section>
   );
 }
@@ -1494,10 +1639,12 @@ function InstallationTab({
 function ConversionFactorsTab({
   categories,
   filters,
+  canManageAdmin,
   actions,
 }: {
   categories: GhgCategory[];
   filters: GhgFactorFilter[];
+  canManageAdmin: boolean;
   actions: Actions;
 }) {
   const [query, setQuery] = useState("");
@@ -1739,7 +1886,8 @@ function ConversionFactorsTab({
                     ) : null}
                   </div>
                 </div>
-                <form
+                <MutationForm
+                  canManage={canManageAdmin}
                   action={actions.updateGhgCategory}
                   className="admin-ghg-actions"
                   onClick={(event) => event.stopPropagation()}
@@ -1756,7 +1904,7 @@ function ConversionFactorsTab({
                   >
                     {category.is_active ? "Enabled" : "Disabled"}
                   </button>
-                </form>
+                </MutationForm>
               </div>
 
               {isSelected ? (
@@ -1775,7 +1923,7 @@ function ConversionFactorsTab({
                         Show active only
                       </label>
                       <div className="admin-ghg-bulk">
-                        <form action={actions.setGhgFactorFiltersActive}>
+                        <MutationForm canManage={canManageAdmin} action={actions.setGhgFactorFiltersActive}>
                           <input
                             type="hidden"
                             name="category_key"
@@ -1785,8 +1933,8 @@ function ConversionFactorsTab({
                           <button className="btn-secondary" type="submit">
                             Enable all
                           </button>
-                        </form>
-                        <form action={actions.setGhgFactorFiltersActive}>
+                        </MutationForm>
+                        <MutationForm canManage={canManageAdmin} action={actions.setGhgFactorFiltersActive}>
                           <input
                             type="hidden"
                             name="category_key"
@@ -1796,7 +1944,7 @@ function ConversionFactorsTab({
                           <button className="btn-secondary" type="submit">
                             Disable all
                           </button>
-                        </form>
+                        </MutationForm>
                       </div>
                     </div>
                   </div>
@@ -2036,7 +2184,8 @@ function ConversionFactorsTab({
                   </div>
                   <div className="admin-ghg-details-scroll">
                     {categoryFilters.map((filter) => (
-                      <form
+                      <MutationForm
+                        canManage={canManageAdmin}
                         key={filter.id}
                         action={actions.updateGhgFactorFilter}
                         className="admin-ghg-details-row"
@@ -2072,7 +2221,7 @@ function ConversionFactorsTab({
                         >
                           {filter.is_active ? "Disable" : "Enable"}
                         </button>
-                      </form>
+                      </MutationForm>
                     ))}
                     {categoryFilters.length === 0 ? (
                       <p className="create-scheme-message">
@@ -2095,9 +2244,11 @@ function ConversionFactorsTab({
 
 function ReportsTab({
   reportMetrics,
+  canManageAdmin,
   actions,
 }: {
   reportMetrics: ReportMetric[];
+  canManageAdmin: boolean;
   actions: Actions;
 }) {
   const [createEquivState, createEquivAction] = useActionState(actions.createReportMetric, {});
@@ -2161,7 +2312,7 @@ function ReportsTab({
           <a className="btn-secondary" href="/reports/co2-savings">
             View CO2 savings
           </a>
-          <form action={uploadReportsAction} className="admin-upload">
+          <MutationForm canManage={canManageAdmin} action={uploadReportsAction} className="admin-upload">
             <input name="file" type="file" accept=".csv" />
             <a
               className="btn-secondary"
@@ -2180,7 +2331,7 @@ function ReportsTab({
             <button className="btn-primary" type="submit">
               Upload
             </button>
-          </form>
+          </MutationForm>
         </div>
       </div>
       {uploadReportsState?.error ? (
@@ -2212,7 +2363,8 @@ function ReportsTab({
             <span>Action</span>
           </div>
           {equivalencies.map((metric) => (
-            <form
+            <MutationForm
+              canManage={canManageAdmin}
               key={metric.id}
               action={actions.updateReportMetric}
               className="admin-row-form admin-report-grid admin-report-grid-equivalency"
@@ -2273,9 +2425,13 @@ function ReportsTab({
               <button className="btn-secondary" type="submit">
                 Update
               </button>
-            </form>
+            </MutationForm>
           ))}
-          <form action={createEquivAction} className="admin-row-form admin-report-grid admin-report-grid-equivalency">
+          <MutationForm
+            canManage={canManageAdmin}
+            action={createEquivAction}
+            className="admin-row-form admin-report-grid admin-report-grid-equivalency"
+          >
             <input type="hidden" name="kind" value="equivalency" />
             <span />
             <input name="label" placeholder="Description" />
@@ -2307,7 +2463,7 @@ function ReportsTab({
             <button className="btn-primary" type="submit">
               Add
             </button>
-          </form>
+          </MutationForm>
         </div>
         {createEquivState?.error ? (
           <p className="create-scheme-message error">{createEquivState.error}</p>
@@ -2325,9 +2481,13 @@ function ReportsTab({
 function UserAccessTab({
   actions,
   userReportPreferences,
+  currentUserRole,
+  canManageAdmin,
 }: {
   actions: Actions;
   userReportPreferences: UserReportPreferences;
+  currentUserRole: AdminAccessRole;
+  canManageAdmin: boolean;
 }) {
   const [inviteState, inviteAction] = useActionState(actions.inviteUser, {});
   const [weeklySummaryState, weeklySummaryAction] = useActionState(
@@ -2345,16 +2505,26 @@ function UserAccessTab({
         <div className="scheme-card-header">
           <h2>User access</h2>
           <p className="scheme-card-subtitle">
-            Invite new users by email. They will receive a link to set a password.
+            Invite new users by email and set whether they should be Admin or User.
           </p>
         </div>
-        <form action={inviteAction} className="admin-create">
+        <MutationForm canManage={canManageAdmin} action={inviteAction} className="admin-create">
           <div className="admin-form-row">
             <input name="email" type="email" placeholder="user@company.com" />
+            <select name="role" defaultValue="user">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
             <button className="btn-primary" type="submit">
               Send invite
             </button>
           </div>
+          {!canManageAdmin ? (
+            <p className="scheme-card-subtitle">
+              Signed in as {currentUserRole === "admin" ? "Admin" : "User"}. Only
+              Admin users can invite or change admin settings.
+            </p>
+          ) : null}
           {inviteState?.error ? (
             <p className="create-scheme-message error">{inviteState.error}</p>
           ) : null}
@@ -2363,7 +2533,7 @@ function UserAccessTab({
               {inviteState.message ?? "Invitation sent."}
             </p>
           ) : null}
-        </form>
+        </MutationForm>
       </section>
 
       <section className="scheme-card">
@@ -2373,7 +2543,7 @@ function UserAccessTab({
             Send the weekly Monday summary email now to verify recipients and delivery.
           </p>
         </div>
-        <form action={weeklySummaryAction} className="admin-create">
+        <MutationForm canManage={canManageAdmin} action={weeklySummaryAction} className="admin-create">
           <div className="admin-form-row">
             <span />
             <button className="btn-primary" type="submit">
@@ -2388,7 +2558,7 @@ function UserAccessTab({
               {weeklySummaryState.message ?? "Weekly summary test sent."}
             </p>
           ) : null}
-        </form>
+        </MutationForm>
       </section>
 
       <section className="scheme-card">
@@ -2398,7 +2568,7 @@ function UserAccessTab({
             Set the default recipient and Google Drive folder used by report actions.
           </p>
         </div>
-        <form action={preferencesAction} className="admin-create">
+        <MutationForm canManage={canManageAdmin} action={preferencesAction} className="admin-create">
           <div className="material-grid material-grid-tight">
             <label>
               Default report email
@@ -2437,7 +2607,7 @@ function UserAccessTab({
               Save defaults
             </button>
           </div>
-        </form>
+        </MutationForm>
       </section>
     </div>
   );

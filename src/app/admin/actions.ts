@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { canManageAdminData } from "@/lib/admin-access";
 import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 
@@ -64,8 +65,18 @@ async function requireUserContext() {
   return { supabase, user };
 }
 
-async function requireUser() {
-  const { supabase } = await requireUserContext();
+async function requireAdminContext() {
+  const context = await requireUserContext();
+
+  if (!canManageAdminData(context.user)) {
+    throw new Error("Admin access required");
+  }
+
+  return context;
+}
+
+async function requireAdminUser() {
+  const { supabase } = await requireAdminContext();
   return supabase;
 }
 
@@ -92,11 +103,16 @@ export async function inviteUser(
   formData: FormData
 ): Promise<ActionState> {
   const email = (formData.get("email") as string | null)?.trim();
+  const roleRaw = (formData.get("role") as string | null)?.trim().toLowerCase();
+  const role = roleRaw === "admin" || roleRaw === "user" ? roleRaw : null;
   if (!email) {
     return { error: "Email address is required." };
   }
+  if (!role) {
+    return { error: "Access level is required." };
+  }
 
-  await requireUser();
+  await requireAdminUser();
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -111,6 +127,7 @@ export async function inviteUser(
   const baseUrl = getConfiguredBaseUrl() ?? (await getBaseUrl());
   const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
     redirectTo: new URL("/reset", baseUrl).toString(),
+    data: { role },
   });
 
   if (error) {
@@ -124,7 +141,7 @@ export async function saveUserReportPreferences(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, user } = await requireUserContext();
+  const { supabase, user } = await requireAdminContext();
 
   const defaultReportEmail = (formData.get("default_report_email") as string | null)?.trim() ?? "";
   const googleDriveFolder = (formData.get("google_drive_folder") as string | null)?.trim() ?? "";
@@ -159,7 +176,7 @@ export async function sendWeeklyProjectSummaryTest(
   _prevState: ActionState,
   _formData: FormData
 ): Promise<ActionState> {
-  await requireUser();
+  await requireAdminUser();
 
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
@@ -244,7 +261,7 @@ export async function createPlant(
     return { error: "Plant name is required." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   if (is_default) {
     await supabase.from("plants").update({ is_default: false }).eq("is_default", true);
   }
@@ -273,7 +290,7 @@ export async function updatePlant(formData: FormData): Promise<void> {
     return;
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   if (is_default) {
     await supabase.from("plants").update({ is_default: false }).neq("id", id);
   }
@@ -292,6 +309,21 @@ export async function updatePlant(formData: FormData): Promise<void> {
 
   revalidatePath("/admin");
   return;
+}
+
+export async function deletePlant(formData: FormData): Promise<ActionState> {
+  const id = (formData.get("id") as string | null)?.trim();
+  if (!id) {
+    return { error: "Missing plant id." };
+  }
+
+  const supabase = await requireAdminUser();
+  const { error } = await supabase.from("plants").delete().eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return { success: true, message: "Plant deleted." };
 }
 
 export async function createPlantMixFactor(
@@ -316,7 +348,7 @@ export async function createPlantMixFactor(
     return { error: "Recycled materials % must be between 0 and 100." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("plant_mix_carbon_factors").insert({
     plant_id,
     mix_type_id,
@@ -354,7 +386,7 @@ export async function updatePlantMixFactor(formData: FormData): Promise<void> {
     return;
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase
     .from("plant_mix_carbon_factors")
     .update({
@@ -383,7 +415,7 @@ export async function setPlantMixDefault(formData: FormData): Promise<void> {
     return;
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error: clearError } = await supabase
     .from("plant_mix_carbon_factors")
     .update({ is_default: false })
@@ -402,6 +434,24 @@ export async function setPlantMixDefault(formData: FormData): Promise<void> {
   return;
 }
 
+export async function deletePlantMixFactor(formData: FormData): Promise<ActionState> {
+  const id = (formData.get("id") as string | null)?.trim();
+  if (!id) {
+    return { error: "Missing material mapping id." };
+  }
+
+  const supabase = await requireAdminUser();
+  const { error } = await supabase
+    .from("plant_mix_carbon_factors")
+    .delete()
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return { success: true, message: "Material mapping deleted." };
+}
+
 export async function createTransportMode(
   _prevState: ActionState,
   formData: FormData
@@ -417,7 +467,7 @@ export async function createTransportMode(
     return { error: "Id, name, and kgCO2e value are required." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   if (is_default) {
     await supabase
     .from("transport_modes")
@@ -451,7 +501,7 @@ export async function updateTransportMode(formData: FormData): Promise<void> {
     return;
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   if (is_default) {
     await supabase
       .from("transport_modes")
@@ -473,7 +523,7 @@ export async function deleteTransportMode(formData: FormData): Promise<void> {
   const id = (formData.get("id") as string | null)?.trim();
   if (!id) return;
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("transport_modes").delete().eq("id", id);
 
   if (error) return;
@@ -493,7 +543,7 @@ export async function createMixType(
     return { error: "Id and name are required." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("mix_types").insert({ id, name });
 
   if (error) return { error: error.message };
@@ -510,7 +560,7 @@ export async function updateMixType(formData: FormData): Promise<ActionState> {
     return { error: "Id and name are required." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("mix_types").update({ name }).eq("id", id);
 
   if (error) return { error: error.message };
@@ -558,7 +608,7 @@ export async function createMaterialMapping(
 
   if (!plant_ids.length) return { error: "Select at least one plant." };
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
 
   let resolvedMixTypeId = mix_type_name ? null : mix_type_id;
   if (!resolvedMixTypeId) {
@@ -726,7 +776,7 @@ export async function createInstallationSetup(
     return { error: "Category is required." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   if (is_default && (category ?? "").toLowerCase() === "fuel") {
     await supabase
       .from("installation_setups")
@@ -786,7 +836,7 @@ export async function updateInstallationSetup(formData: FormData): Promise<void>
     return;
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   if (is_default && (category ?? "").toLowerCase() === "fuel") {
     await supabase
       .from("installation_setups")
@@ -892,7 +942,7 @@ export async function updateInstallationSetupsBulk(
     return { error: "No valid rows to update." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
 
   const fuelDefaults = sanitized.filter(
     (row) => row.is_default && row.category.toLowerCase() === "fuel"
@@ -1030,7 +1080,7 @@ export async function uploadInstallationSetups(
     };
   });
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("installation_setups").insert(records);
 
   if (error) return { error: error.message };
@@ -1045,7 +1095,7 @@ export async function deleteInstallationSetup(
   const id = formData.get("id") as string;
   if (!id) return { error: "Missing id." };
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("installation_setups").delete().eq("id", id);
 
   if (error) return { error: error.message };
@@ -1089,7 +1139,7 @@ export async function uploadPlants(
     return { name, location, description, is_default };
   });
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("plants").insert(records);
 
   if (error) return { error: error.message };
@@ -1112,7 +1162,7 @@ export async function uploadMaterialMappings(
     return { error: "CSV file is empty." };
   }
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
 
   const { data: plants, error: plantsError } = await supabase
     .from("plants")
@@ -1278,7 +1328,7 @@ export async function uploadReportMetrics(
   const { rows } = parseCsv(text);
   if (!rows.length) return { error: "No rows found in CSV." };
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { data: existing } = await supabase
     .from("report_metrics")
     .select("id, kind, label");
@@ -1455,7 +1505,7 @@ export async function createReportMetric(
 
   const sort_order = sortRaw ? Number(sortRaw) : 0;
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("report_metrics").insert({
     kind,
     label,
@@ -1508,7 +1558,7 @@ export async function updateReportMetric(formData: FormData): Promise<void> {
 
   const sort_order = sortRaw ? Number(sortRaw) : 0;
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase
     .from("report_metrics")
     .update({
@@ -1535,7 +1585,7 @@ export async function deleteReportMetric(formData: FormData): Promise<void> {
   const id = formData.get("id") as string | null;
   if (!id) return;
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase.from("report_metrics").delete().eq("id", id);
   if (error) return;
 
@@ -1549,7 +1599,7 @@ export async function updateGhgCategory(formData: FormData): Promise<void> {
 
   const is_active = formData.get("is_active") === "on";
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase
     .from("ghg_factor_categories")
     .update({ is_active })
@@ -1567,7 +1617,7 @@ export async function updateGhgFactorFilter(formData: FormData): Promise<void> {
 
   const is_active = formData.get("is_active") === "on";
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase
     .from("ghg_factor_filters")
     .update({ is_active })
@@ -1586,7 +1636,7 @@ export async function setGhgFactorFiltersActive(formData: FormData): Promise<voi
 
   const is_active = value === "on";
 
-  const supabase = await requireUser();
+  const supabase = await requireAdminUser();
   const { error } = await supabase
     .from("ghg_factor_filters")
     .update({ is_active })
@@ -1597,3 +1647,4 @@ export async function setGhgFactorFiltersActive(formData: FormData): Promise<voi
   revalidatePath("/admin");
   return;
 }
+

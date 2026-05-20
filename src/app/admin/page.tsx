@@ -1,5 +1,6 @@
 import { AuthGate } from "@/components/AuthGate";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { canManageAdminData, getAdminAccessLabel, getAdminAccessRole } from "@/lib/admin-access";
 import { AdminTabs } from "@/components/AdminTabs";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
@@ -11,6 +12,8 @@ import {
   createPlantMixFactor,
   createReportMetric,
   createTransportMode,
+  deletePlant,
+  deletePlantMixFactor,
   deleteTransportMode,
   deleteInstallationSetup,
   deleteReportMetric,
@@ -39,6 +42,9 @@ export default async function AdminPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const currentUserRole = getAdminAccessRole(user);
+  const canManageAdmin = canManageAdminData(user);
+  const roleLabel = getAdminAccessLabel(user);
 
   const { data: plants } = await supabase
     .from("plants")
@@ -142,7 +148,7 @@ export default async function AdminPage() {
         <header className="admin-header">
           <div className="admin-header-row">
             <div>
-              <p className="scheme-kicker">Admin</p>
+              <p className="scheme-kicker">{roleLabel}</p>
               <h1>Reference data</h1>
               <p className="schemes-subtitle">
                 Maintain plants, materials, logistics, and installation setup data.
@@ -168,12 +174,16 @@ export default async function AdminPage() {
           ghgCategories={ghgCategories ?? []}
           ghgFilters={ghgFilters ?? []}
           userReportPreferences={userReportPreferences}
+          currentUserRole={currentUserRole}
+          canManageAdmin={canManageAdmin}
           actions={{
             createPlant,
             updatePlant,
+            deletePlant,
             createPlantMixFactor,
             updatePlantMixFactor,
             setPlantMixDefault,
+            deletePlantMixFactor,
             createTransportMode,
             updateTransportMode,
             deleteTransportMode,
